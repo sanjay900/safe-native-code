@@ -6,7 +6,6 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.util.Arrays;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -18,7 +17,7 @@ public class SlaveJVM implements JVM {
     public SlaveJVM(String classpath, String JVMOptions, Class main) throws IOException, NotBoundException {
         Path javaProcess = Paths.get(System.getProperty("java.home"), "bin", "java");
         Registry registry = LocateRegistry.createRegistry(1099);
-        jvm = new ProcessBuilder(javaProcess.toString(), "-cp", classpath, ClientJVM.class.getName(), uuid.toString(), main.getName()).inheritIO().start();
+        jvm = new ProcessBuilder(javaProcess.toString(), JVMOptions, "-cp", classpath, ClientJVM.class.getName(), uuid.toString(), main.getName()).inheritIO().start();
 
         while (true) {
             try {
@@ -39,6 +38,6 @@ public class SlaveJVM implements JVM {
 
     public static void main(String[] args) throws IOException, NotBoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         JVM slave = new SlaveJVM(System.getProperty("java.class.path"), "", Test.class);
-        System.out.println(slave.call("calculateNumber", (Integer)5, (Integer)6));
+        System.out.println(slave.call("calculateNumber", (Integer) 5, (Integer) 6));
     }
 }
