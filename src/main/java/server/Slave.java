@@ -1,7 +1,8 @@
 package server;
 
-import slave.ISlaveJVM;
-import slave.SlaveJVM;
+import slave.ISlaveMain;
+import slave.RemoteObject;
+import slave.SlaveMain;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -19,7 +20,7 @@ import java.util.UUID;
  * This class is responsible for starting up the remote jvm and
  */
 public class Slave implements ISlave {
-    private ISlaveJVM remoteSlave;
+    private ISlaveMain remoteSlave;
     private static Registry registry;
 
     static {
@@ -36,21 +37,21 @@ public class Slave implements ISlave {
         List<String> args = new ArrayList<>();
         args.add(javaProcess.toString());
         args.addAll(Arrays.asList(jvmOptions));
-        args.addAll(Arrays.asList("-cp", classpath, SlaveJVM.class.getName(), uuid.toString()));
+        args.addAll(Arrays.asList("-cp", classpath, SlaveMain.class.getName(), uuid.toString()));
         Process process = new ProcessBuilder(args.toArray(new String[0])).inheritIO().start();
         //End the remoteSlave process if the parent process ends.
         Runtime.getRuntime().addShutdownHook(new Thread(process::destroy));
         while (!Arrays.asList(registry.list()).contains(uuid.toString())) {
             Thread.sleep(100);
         }
-        remoteSlave = (ISlaveJVM) registry.lookup(uuid.toString());
+        remoteSlave = (ISlaveMain) registry.lookup(uuid.toString());
     }
 
-    public <T> IRemoteObject<T> newInst(Class<T> clazz) throws RemoteException, IllegalAccessException, InstantiationException {
+    public <T> RemoteObject<T> newInst(Class<T> clazz) throws RemoteException, IllegalAccessException, InstantiationException {
         return remoteSlave.newInst(clazz);
     }
 
-    public ISlaveJVM getRemoteSlave() {
+    public ISlaveMain getRemoteSlaveJVM() {
         return remoteSlave;
     }
 }

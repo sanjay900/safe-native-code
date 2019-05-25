@@ -1,5 +1,7 @@
 package server;
 
+import slave.RemoteObject;
+
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
@@ -17,5 +19,5 @@ public interface ISlave extends Remote {
      * @throws IllegalAccessException IllegalAccessException while trying to instantiate
      * @throws InstantiationException InstantiationException while trying to instantiate
      */
-    <T> IRemoteObject<T> newInst(Class<T> clazz) throws RemoteException, IllegalAccessException, InstantiationException;
+    <T> RemoteObject<T> newInst(Class<T> clazz) throws RemoteException, IllegalAccessException, InstantiationException;
 }
