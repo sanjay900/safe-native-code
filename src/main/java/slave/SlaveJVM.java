@@ -1,7 +1,6 @@
 package slave;
 
-import server.JVM;
-import server.RemoteObject;
+import server.SerializableConsumer;
 import server.SerializableFunction;
 
 import java.rmi.RemoteException;
@@ -12,13 +11,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class SlaveJVM implements JVM {
+public class SlaveJVM implements ISlaveJVM {
 
     private transient Map<UUID, SlaveObject> clientObjects = new HashMap<>();
 
     private SlaveJVM(UUID uuid) throws RemoteException {
         Registry registry = LocateRegistry.getRegistry(1099);
-        JVM stub = (JVM) UnicastRemoteObject.exportObject(this, 0);
+        ISlaveJVM stub = (ISlaveJVM) UnicastRemoteObject.exportObject(this, 0);
         registry.rebind(uuid.toString(), stub);
     }
 
@@ -27,6 +26,12 @@ public class SlaveJVM implements JVM {
         RemoteObject<T> r = new RemoteObject<>(this);
         clientObjects.put(r.getUuid(), new SlaveObject<>(clazz, this));
         return r;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> void call(RemoteObject<T> obj, SerializableConsumer<T> lambda) {
+        clientObjects.get(obj.getUuid()).call(lambda);
     }
 
     @Override
@@ -49,13 +54,25 @@ public class SlaveJVM implements JVM {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> RemoteObject<T> move(RemoteObject<T> obj, JVM destination) throws RemoteException {
-        return destination.copy((T) clientObjects.remove(obj.getUuid()).get());
+    public <T> RemoteObject<T> copy(RemoteObject<T> obj, ISlaveJVM destination) throws RemoteException {
+        return destination.copy((T) clientObjects.get(obj.getUuid()).get());
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> void move(RemoteObject<T> obj, ISlaveJVM destination) throws RemoteException {
+        destination.move(obj, (T) clientObjects.remove(obj.getUuid()).get());
     }
 
     @Override
     public <T> RemoteObject<T> copy(T object) {
         return wrap(object);
+    }
+
+    @Override
+    public <T> RemoteObject<T> move(RemoteObject<T> remoteObject, T object) {
+        clientObjects.put(remoteObject.getUuid(), new SlaveObject<>(object, this));
+        return remoteObject;
     }
 
     public static void main(String[] args) throws RemoteException {

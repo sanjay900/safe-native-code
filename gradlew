@@ -27,7 +27,7 @@ cd "$SAVED" >/dev/null
 APP_NAME="Gradle"
 APP_BASE_NAME=`basename "$0"`
 
-# Add default server.JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass server.JVM options to this script.
+# Add default server.ISlave options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass server.ISlave options to this script.
 DEFAULT_JVM_OPTS=""
 
 # Use the maximum available, or set MAX_FD != -1 to use that value.
@@ -66,7 +66,7 @@ esac
 
 CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
 
-# Determine the Java command to use to start the server.JVM.
+# Determine the Java command to use to start the server.ISlave.
 if [ -n "$JAVA_HOME" ] ; then
     if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
         # IBM's JDK on AIX uses strange locations for the executables

@@ -1,5 +1,6 @@
 package server;
 
+import slave.ISlaveJVM;
 import slave.SlaveJVM;
 
 import java.io.IOException;
@@ -14,8 +15,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-public class ServerJVM {
-    private JVM client;
+/**
+ * This class is responsible for starting up the remote jvm and
+ */
+public class Slave implements ISlave {
+    private ISlaveJVM remoteSlave;
     private static Registry registry;
 
     static {
@@ -26,7 +30,7 @@ public class ServerJVM {
         }
     }
 
-    public ServerJVM(String classpath, String... jvmOptions) throws IOException, InterruptedException, NotBoundException {
+    public Slave(String classpath, String... jvmOptions) throws IOException, InterruptedException, NotBoundException {
         Path javaProcess = Paths.get(System.getProperty("java.home"), "bin", "java");
         UUID uuid = UUID.randomUUID();
         List<String> args = new ArrayList<>();
@@ -34,19 +38,19 @@ public class ServerJVM {
         args.addAll(Arrays.asList(jvmOptions));
         args.addAll(Arrays.asList("-cp", classpath, SlaveJVM.class.getName(), uuid.toString()));
         Process process = new ProcessBuilder(args.toArray(new String[0])).inheritIO().start();
-        //End the client process if the parent process ends.
+        //End the remoteSlave process if the parent process ends.
         Runtime.getRuntime().addShutdownHook(new Thread(process::destroy));
         while (!Arrays.asList(registry.list()).contains(uuid.toString())) {
             Thread.sleep(100);
         }
-        client = (JVM) registry.lookup(uuid.toString());
+        remoteSlave = (ISlaveJVM) registry.lookup(uuid.toString());
     }
 
-    public <T> RemoteObject<T> newInst(Class<T> clazz) throws RemoteException, IllegalAccessException, InstantiationException {
-        return client.newInst(clazz);
+    public <T> IRemoteObject<T> newInst(Class<T> clazz) throws RemoteException, IllegalAccessException, InstantiationException {
+        return remoteSlave.newInst(clazz);
     }
 
-    JVM getClient() {
-        return client;
+    public ISlaveJVM getRemoteSlave() {
+        return remoteSlave;
     }
 }

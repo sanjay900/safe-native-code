@@ -1,6 +1,6 @@
 package slave;
 
-import server.RemoteObject;
+import server.SerializableConsumer;
 import server.SerializableFunction;
 
 import java.io.Serializable;
@@ -21,6 +21,10 @@ class SlaveObject<T> implements Serializable {
 
     <R> RemoteObject<R> call(SerializableFunction<T, R> lambda) {
         return remote.wrap(lambda.apply(this.get()));
+    }
+
+    void call(SerializableConsumer<T> lambda) {
+        lambda.accept(this.get());
     }
 
     T get() {
