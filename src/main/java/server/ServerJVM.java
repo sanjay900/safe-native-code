@@ -42,7 +42,7 @@ public class ServerJVM {
         client = (JVM) registry.lookup(uuid.toString());
     }
 
-    public RemoteObject newInst(Class<?> clazz) throws RemoteException, IllegalAccessException, InstantiationException {
+    public <T>RemoteObject<T> newInst(Class<T> clazz) throws RemoteException, IllegalAccessException, InstantiationException {
         return client.newInst(clazz);
     }
 

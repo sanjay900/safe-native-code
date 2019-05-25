@@ -2,8 +2,8 @@ package slave;
 
 import server.JVM;
 import server.RemoteObject;
+import server.SerializableFunction;
 
-import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -23,35 +23,38 @@ public class SlaveJVM implements JVM {
     }
 
     @Override
-    public RemoteObject newInst(Class<?> clazz) throws IllegalAccessException, InstantiationException {
-        RemoteObject r = new RemoteObject(this);
-        clientObjects.put(r.getUuid(), new SlaveObject(clazz, this));
-        return r;
-    }
-
-    RemoteObject wrap(Object object) {
-        RemoteObject r = new RemoteObject(this);
-        clientObjects.put(r.getUuid(), new SlaveObject(object, this));
+    public <T>RemoteObject<T> newInst(Class<T> clazz) throws IllegalAccessException, InstantiationException {
+        RemoteObject<T> r = new RemoteObject<>(this);
+        clientObjects.put(r.getUuid(), new SlaveObject<>(clazz, this));
         return r;
     }
 
     @Override
-    public RemoteObject call(RemoteObject obj, String methodName, Object... args) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        return clientObjects.get(obj.getUuid()).call(methodName, args);
+    @SuppressWarnings("unchecked")
+    public <T, R> RemoteObject<R> call(RemoteObject<T> obj, SerializableFunction<T, R> lambda) {
+        return clientObjects.get(obj.getUuid()).call(lambda);
+    }
+
+    <T>RemoteObject<T> wrap(T object) {
+        RemoteObject<T> r = new RemoteObject<>(this);
+        clientObjects.put(r.getUuid(), new SlaveObject<T>(object, this));
+        return r;
     }
 
     @Override
-    public Object get(RemoteObject obj) {
-        return clientObjects.get(obj.getUuid()).get();
+    @SuppressWarnings("unchecked")
+    public <T>T get(RemoteObject<T> obj) {
+        return (T) clientObjects.get(obj.getUuid()).get();
     }
 
     @Override
-    public RemoteObject move(RemoteObject obj, JVM destination) throws RemoteException {
-        return destination.copy(clientObjects.remove(obj.getUuid()).get());
+    @SuppressWarnings("unchecked")
+    public <T>RemoteObject<T> move(RemoteObject<T> obj, JVM destination) throws RemoteException {
+        return (RemoteObject<T>) destination.copy(clientObjects.remove(obj.getUuid()).get());
     }
 
     @Override
-    public RemoteObject copy(Object object) {
+    public <T>RemoteObject<T> copy(T object) {
         return wrap(object);
     }
 

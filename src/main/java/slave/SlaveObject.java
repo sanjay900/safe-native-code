@@ -1,16 +1,15 @@
 package slave;
 
-import org.apache.commons.lang3.ClassUtils;
 import server.RemoteObject;
+import server.SerializableFunction;
 
 import java.io.Serializable;
-import java.lang.reflect.InvocationTargetException;
 
-class SlaveObject implements Serializable {
+class SlaveObject<T> implements Serializable {
     private Object object;
     private SlaveJVM remote;
 
-    SlaveObject(Class<?> clazz, SlaveJVM remote) throws IllegalAccessException, InstantiationException {
+    SlaveObject(Class<T> clazz, SlaveJVM remote) throws IllegalAccessException, InstantiationException {
         object = clazz.newInstance();
         this.remote = remote;
     }
@@ -20,15 +19,11 @@ class SlaveObject implements Serializable {
         this.remote = remote;
     }
 
-    RemoteObject call(String methodName, Object... args) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-
-        Class[] c = new Class[args.length];
-        for (int i = 0; i < args.length; i++) {
-            c[i] = args[i].getClass();
-        }
-        return remote.wrap(object.getClass().getDeclaredMethod(methodName, ClassUtils.wrappersToPrimitives(c)).invoke(object, args));
+    <R>RemoteObject<R> call(SerializableFunction<T,R> lambda) {
+        return remote.wrap(lambda.apply(this.get()));
     }
-    Object get() {
-        return object;
+    @SuppressWarnings("unchecked")
+    T get() {
+        return (T) object;
     }
 }
