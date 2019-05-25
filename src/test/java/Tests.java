@@ -23,6 +23,7 @@ public class Tests {
         Assert.assertEquals(c.call(t -> t.addToBase(5)).get(), 15, 0);
         RemoteObject<LocalAdder> c2 = c.copy(slave2);
         c2.run(s -> s.setBase(15));
+        //Since we copied the object, the original object should not be modified in the process.
         Assert.assertEquals(c2.call(t -> t.addToBase(5)).get(), 20, 0);
         Assert.assertEquals(c.call(t -> t.addToBase(5)).get(), 15, 0);
     }
@@ -35,6 +36,7 @@ public class Tests {
         Assert.assertEquals(c.call(t -> t.addToBase(5)).get(), 15, 0);
         RemoteObject<LocalAdder> c2 = c.move(slave2);
         c2.run(s -> s.setBase(15));
+        //We moved the object, so the original object should represent the new object.
         Assert.assertEquals(c2.call(t -> t.addToBase(5)).get(), 20, 0);
         Assert.assertEquals(c.call(t -> t.addToBase(5)).get(), 20, 0);
     }
