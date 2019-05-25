@@ -24,8 +24,6 @@ public class Tests {
         IRemoteObject<LocalAdder> c2 = c.copy(slave2);
         c2.call(s -> s.setBase(15));
         Assert.assertEquals(c2.callReturn(t -> t.addToBase(5)).get(), 20, 0);
-        System.out.println(c);
-        System.out.println(c2);
         Assert.assertEquals(c.callReturn(t -> t.addToBase(5)).get(), 15, 0);
     }
 

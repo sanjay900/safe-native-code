@@ -18,10 +18,6 @@ public class RemoteObject<T> implements IRemoteObject<T> {
         return uuid;
     }
 
-    void setSlave(ISlaveJVM slave) {
-        this.slave = slave;
-    }
-
     public T get() throws RemoteException {
         return slave.get(this);
     }
@@ -36,7 +32,7 @@ public class RemoteObject<T> implements IRemoteObject<T> {
 
     public IRemoteObject<T> move(Slave slave) throws RemoteException {
         this.slave.move(this, slave.getRemoteSlave());
-        setSlave(slave.getRemoteSlave());
+        this.slave = slave.getRemoteSlave();
         return this;
     }
 
