@@ -14,7 +14,7 @@ public class RemoteObject<T> implements Serializable {
     }
 
 
-    public <R> RemoteObject<R> call(SerializableFunction<T,R> lambda) throws RemoteException {
+    public <R> RemoteObject<R> call(SerializableFunction<T, R> lambda) throws RemoteException {
         return remote.call(this, lambda);
     }
 
@@ -25,11 +25,8 @@ public class RemoteObject<T> implements Serializable {
     public Object get() throws RemoteException {
         return remote.get(this);
     }
-
-    public RemoteObject<T> move(JVM jvm) throws RemoteException {
-        return remote.move(this, jvm);
-    }
+    
     public RemoteObject<T> move(ServerJVM jvm) throws RemoteException {
-        return move(jvm.getClient());
+        return remote.move(this, jvm.getClient());
     }
 }

@@ -34,7 +34,7 @@ public class ServerJVM {
         args.addAll(Arrays.asList(jvmOptions));
         args.addAll(Arrays.asList("-cp", classpath, SlaveJVM.class.getName(), uuid.toString()));
         Process process = new ProcessBuilder(args.toArray(new String[0])).inheritIO().start();
-        //End the process
+        //End the client process if the parent process ends.
         Runtime.getRuntime().addShutdownHook(new Thread(process::destroy));
         while (!Arrays.asList(registry.list()).contains(uuid.toString())) {
             Thread.sleep(100);
@@ -42,7 +42,7 @@ public class ServerJVM {
         client = (JVM) registry.lookup(uuid.toString());
     }
 
-    public <T>RemoteObject<T> newInst(Class<T> clazz) throws RemoteException, IllegalAccessException, InstantiationException {
+    public <T> RemoteObject<T> newInst(Class<T> clazz) throws RemoteException, IllegalAccessException, InstantiationException {
         return client.newInst(clazz);
     }
 

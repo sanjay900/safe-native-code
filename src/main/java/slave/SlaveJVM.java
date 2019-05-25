@@ -23,7 +23,7 @@ public class SlaveJVM implements JVM {
     }
 
     @Override
-    public <T>RemoteObject<T> newInst(Class<T> clazz) throws IllegalAccessException, InstantiationException {
+    public <T> RemoteObject<T> newInst(Class<T> clazz) throws IllegalAccessException, InstantiationException {
         RemoteObject<T> r = new RemoteObject<>(this);
         clientObjects.put(r.getUuid(), new SlaveObject<>(clazz, this));
         return r;
@@ -35,26 +35,26 @@ public class SlaveJVM implements JVM {
         return clientObjects.get(obj.getUuid()).call(lambda);
     }
 
-    <T>RemoteObject<T> wrap(T object) {
+    <T> RemoteObject<T> wrap(T object) {
         RemoteObject<T> r = new RemoteObject<>(this);
-        clientObjects.put(r.getUuid(), new SlaveObject<T>(object, this));
+        clientObjects.put(r.getUuid(), new SlaveObject<>(object, this));
         return r;
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T>T get(RemoteObject<T> obj) {
+    public <T> T get(RemoteObject<T> obj) {
         return (T) clientObjects.get(obj.getUuid()).get();
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T>RemoteObject<T> move(RemoteObject<T> obj, JVM destination) throws RemoteException {
-        return (RemoteObject<T>) destination.copy(clientObjects.remove(obj.getUuid()).get());
+    public <T> RemoteObject<T> move(RemoteObject<T> obj, JVM destination) throws RemoteException {
+        return destination.copy((T) clientObjects.remove(obj.getUuid()).get());
     }
 
     @Override
-    public <T>RemoteObject<T> copy(T object) {
+    public <T> RemoteObject<T> copy(T object) {
         return wrap(object);
     }
 

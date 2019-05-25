@@ -6,7 +6,7 @@ import server.SerializableFunction;
 import java.io.Serializable;
 
 class SlaveObject<T> implements Serializable {
-    private Object object;
+    private T object;
     private SlaveJVM remote;
 
     SlaveObject(Class<T> clazz, SlaveJVM remote) throws IllegalAccessException, InstantiationException {
@@ -14,16 +14,16 @@ class SlaveObject<T> implements Serializable {
         this.remote = remote;
     }
 
-    SlaveObject(Object object, SlaveJVM remote) {
+    SlaveObject(T object, SlaveJVM remote) {
         this.object = object;
         this.remote = remote;
     }
 
-    <R>RemoteObject<R> call(SerializableFunction<T,R> lambda) {
+    <R> RemoteObject<R> call(SerializableFunction<T, R> lambda) {
         return remote.wrap(lambda.apply(this.get()));
     }
-    @SuppressWarnings("unchecked")
+
     T get() {
-        return (T) object;
+        return object;
     }
 }
