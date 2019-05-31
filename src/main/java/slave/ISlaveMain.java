@@ -17,7 +17,7 @@ public interface ISlaveMain extends ISlave {
 
     <T, R> RemoteObject<R> call(RemoteObject<T> obj, SerializableFunction<T, R> lambda) throws RemoteException;
 
-    <T> T get(RemoteObject<T> obj) throws RemoteException;
+    <T> T get(RemoteObject<T> obj) throws RemoteException, IncorrectSlaveException;
 
     <T> RemoteObject<T> copy(RemoteObject<T> obj, ISlaveMain destination) throws RemoteException;
 
