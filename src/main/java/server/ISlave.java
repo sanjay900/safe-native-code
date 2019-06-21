@@ -1,6 +1,5 @@
 package server;
 
-import slave.IncorrectSlaveException;
 import slave.RemoteObject;
 
 import java.io.Serializable;

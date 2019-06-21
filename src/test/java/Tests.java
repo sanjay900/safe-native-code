@@ -7,6 +7,8 @@ import slave.RemoteObject;
 import java.io.IOException;
 import java.io.Serializable;
 import java.rmi.NotBoundException;
+import java.time.Duration;
+import java.time.Instant;
 
 public class Tests {
     static class Adder implements Serializable {
@@ -94,5 +96,41 @@ public class Tests {
         //We moved the object, so the original object should represent the new object.
         Assert.assertEquals(c2.call(t -> t.addToBase(5)).get(), 20, 0);
         Assert.assertEquals(c.call(t -> t.addToBase(5)).get(), 20, 0);
+    }
+    public static class TimingTest implements Serializable{
+        long local = 0;
+        void addAll() {
+            for (long i = 0; i < 10000000; i++) {
+                addSingle(i);
+            }
+        }
+        void addSingle(long i) {
+            local += i;
+        }
+    }
+
+    @Test
+    public void time() throws InterruptedException, NotBoundException, IOException {
+        long expected = 49999995000000L;
+        int timeMillisDirect = 0;
+        int timeMillisSlave = 0;
+        for (int i =0 ; i < 20; i++) {
+            Instant start = Instant.now();
+            TimingTest t = new TimingTest();
+            t.addAll();
+            Instant end = Instant.now();
+            Assert.assertEquals(expected, t.local, 0);
+            timeMillisDirect += Duration.between(start, end).toMillis();
+            start = Instant.now();
+            Slave slave = new Slave(System.getProperty("java.class.path"));
+            RemoteObject<TimingTest> test = slave.call(TimingTest::new);
+            test.run(TimingTest::addAll);
+            t = test.get();
+            end = Instant.now();
+            Assert.assertEquals(expected, t.local, 0);
+            timeMillisSlave += Duration.between(start, end).toMillis();
+        }
+        System.out.println("Time taken for direct: "+timeMillisDirect/20 + " milliseconds");
+        System.out.println("Time taken for slave: "+timeMillisSlave/20 + " milliseconds");
     }
 }
