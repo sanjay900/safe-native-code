@@ -3,7 +3,6 @@ package compiler;
 import javax.tools.DiagnosticCollector;
 import javax.tools.JavaFileObject;
 import javax.tools.ToolProvider;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 

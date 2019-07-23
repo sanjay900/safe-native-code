@@ -1,12 +1,10 @@
 package compiler;
 
-import org.apache.commons.io.FilenameUtils;
-
 import javax.tools.JavaCompiler;
 import javax.tools.*;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -36,18 +34,6 @@ public class ClassFileManager extends ForwardingJavaFileManager<StandardJavaFile
      */
     ClassFileManager(StandardJavaFileManager standardManager) {
         super(standardManager);
-        URL.setURLStreamHandlerFactory(protocol -> "dynamicclass".equals(protocol) ? new URLStreamHandler() {
-            protected URLConnection openConnection(URL url) {
-                return new URLConnection(url) {
-                    public void connect() {}
-
-                    @Override
-                    public InputStream getInputStream() {
-                        return new ByteArrayInputStream(classMap.get(url.getPath()).getBytes());
-                    }
-                };
-            }
-        } : null);
         this.classLoader = new SecureClassLoader() {
             @Override
             protected Class<?> findClass(String name)
@@ -70,15 +56,29 @@ public class ClassFileManager extends ForwardingJavaFileManager<StandardJavaFile
 
             @Override
             public URL getResource(String name) {
-                //Change from a url syntax to a class syntax, and strip away .class
                 String javaName = CompilerUtils.urlToJava(name);
+                //If this isn't a class from this compiler, hand off to the parent
                 if (!classMap.containsKey(javaName)) {
                     return super.getResource(name);
                 }
+                //Return a new url, that returns our file for its input stream.
                 try {
-                    return new URL("dynamicclass:"+javaName);
+                    return new URL(null, "string:" + javaName, new URLStreamHandler() {
+                        @Override
+                        protected URLConnection openConnection(URL u) {
+                            return new URLConnection(u) {
+                                public void connect() {
+                                }
+
+                                @Override
+                                public InputStream getInputStream() {
+                                    return new ByteArrayInputStream(classMap.get(url.getPath()).getBytes());
+                                }
+                            };
+                        }
+                    });
                 } catch (MalformedURLException e) {
-                    return null;
+                    throw new UncheckedIOException(e);
                 }
             }
         };

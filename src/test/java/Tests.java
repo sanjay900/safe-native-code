@@ -1,8 +1,7 @@
+import compiler.JavaCompiler;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import compiler.JavaCompiler;
 import server.SafeCodeLibrary;
 import server.Slave;
 import slave.IncorrectSlaveException;
@@ -10,6 +9,7 @@ import slave.RemoteObject;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 import java.rmi.NotBoundException;
 import java.time.Duration;
 import java.time.Instant;
@@ -19,6 +19,7 @@ public class Tests {
     public static void initialize() {
         SafeCodeLibrary.initialiseWithClassLoaders(1234, 1235, JavaCompiler.getClassLoader());
     }
+
     static class Adder implements Serializable {
         int calculateNumber(int a, int b) {
             return a + b;
@@ -146,19 +147,26 @@ public class Tests {
     }
 
     @Test
-    public void test() throws Exception {
+    public void TestDynamicCompilation() throws Exception {
         Class<?> clazz = JavaCompiler.compile(
                 "public class Test {" +
-                        "public Test() {System.out.println(\"test\");}" +
+                        "public String getData() {return \"test\";}" +
                         "}", "Test");
         Slave slave = new Slave();
-        slave.call(() -> {
+        Assert.assertEquals("test", slave.call(() -> {
             try {
-                clazz.newInstance();
+                return clazz.newInstance();
             } catch (InstantiationException | IllegalAccessException e) {
                 e.printStackTrace();
             }
-            return "";
-        });
+            return null;
+        }).call(s -> {
+            try {
+                return s.getClass().getDeclaredMethod("getData").invoke(s);
+            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }).get());
     }
 }
