@@ -1,5 +1,6 @@
 import org.junit.Assert;
 import org.junit.Test;
+import compiler.JavaCompiler;
 import server.Slave;
 import slave.IncorrectSlaveException;
 import slave.RemoteObject;
@@ -97,13 +98,16 @@ public class Tests {
         Assert.assertEquals(c2.call(t -> t.addToBase(5)).get(), 20, 0);
         Assert.assertEquals(c.call(t -> t.addToBase(5)).get(), 20, 0);
     }
-    public static class TimingTest implements Serializable{
+
+    public static class TimingTest implements Serializable {
         long local = 0;
+
         void addAll() {
             for (long i = 0; i < 10000000; i++) {
                 addSingle(i);
             }
         }
+
         void addSingle(long i) {
             local += i;
         }
@@ -114,7 +118,7 @@ public class Tests {
         long expected = 49999995000000L;
         int timeMillisDirect = 0;
         int timeMillisSlave = 0;
-        for (int i =0 ; i < 20; i++) {
+        for (int i = 0; i < 20; i++) {
             Instant start = Instant.now();
             TimingTest t = new TimingTest();
             t.addAll();
@@ -130,7 +134,23 @@ public class Tests {
             Assert.assertEquals(expected, t.local, 0);
             timeMillisSlave += Duration.between(start, end).toMillis();
         }
-        System.out.println("Time taken for direct: "+timeMillisDirect/20 + " milliseconds");
-        System.out.println("Time taken for slave: "+timeMillisSlave/20 + " milliseconds");
+        System.out.println("Time taken for direct: " + timeMillisDirect / 20 + " milliseconds");
+        System.out.println("Time taken for slave: " + timeMillisSlave / 20 + " milliseconds");
+    }
+
+    @Test
+    public void test() throws Exception {
+        Class<?> clazz = JavaCompiler.compileAndGet(
+                        "import java.io.Serializable;" +
+                        "public class Test implements Serializable, TestIntf {" +
+                        "public void printSomething() {System.out.println(\"test\");}" +
+                        "}", "Test");
+        TestIntf p = (TestIntf) clazz.newInstance();
+        Slave slave = new Slave(System.getProperty("java.class.path"));
+        slave.call(() -> {
+            p.printSomething();
+            System.out.println(p);
+            return p;
+        });
     }
 }
