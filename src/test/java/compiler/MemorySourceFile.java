@@ -14,17 +14,12 @@ public class MemorySourceFile extends SimpleJavaFileObject {
      * @param source the source code string
      */
     public MemorySourceFile(String name, String source) {
-        super(URI.create("string:///" + replace(name) + Kind.SOURCE.extension), Kind.SOURCE);
+        super(URI.create("string:///" + CompilerUtils.javaToURL(name) + Kind.SOURCE.extension), Kind.SOURCE);
         this.sourceCode = source;
     }
 
-    public static String replace(String str) {
-        return str.replaceAll("\\.", "/");
-    }
-
     @Override
-    public CharSequence getCharContent(boolean ignoreEncodingErrors)
-            throws IOException {
+    public CharSequence getCharContent(boolean ignoreEncodingErrors) {
         return sourceCode;
     }
 }

@@ -21,21 +21,21 @@ import java.util.UUID;
 public class Slave implements ISlave {
     private ISlaveMain remoteSlave;
 
-    public Slave(String classpath, String... jvmOptions) throws IOException, InterruptedException, NotBoundException {
+    public Slave(String... jvmOptions) throws IOException, InterruptedException, NotBoundException {
         Path javaProcess = Paths.get(System.getProperty("java.home"), "bin", "java");
         UUID uuid = UUID.randomUUID();
         List<String> args = new ArrayList<>();
         args.add(javaProcess.toString());
         args.addAll(Arrays.asList(jvmOptions));
-        args.add("-Djava.rmi.server.codebase=" + RemoteCodeManager.getCodebase());
-        args.addAll(Arrays.asList("-cp", RemoteCodeManager.getRemoteJar().getAbsolutePath(), SlaveMain.class.getName(), RemoteCodeManager.getRMIPort() + "", uuid.toString()));
+        args.add("-Djava.rmi.server.codebase=" + SafeCodeLibrary.getCodebase());
+        args.addAll(Arrays.asList("-cp", System.getProperty("java.class.path"), SlaveMain.class.getName(), SafeCodeLibrary.getRMIPort() + "", uuid.toString()));
         Process process = new ProcessBuilder(args.toArray(new String[0])).inheritIO().start();
         //End the remoteSlave process if the parent process ends.
         Runtime.getRuntime().addShutdownHook(new Thread(process::destroy));
-        while (!Arrays.asList(RemoteCodeManager.getRegistry().list()).contains(uuid.toString())) {
+        while (!Arrays.asList(SafeCodeLibrary.getRegistry().list()).contains(uuid.toString())) {
             Thread.sleep(10);
         }
-        remoteSlave = (ISlaveMain) RemoteCodeManager.getRegistry().lookup(uuid.toString());
+        remoteSlave = (ISlaveMain) SafeCodeLibrary.getRegistry().lookup(uuid.toString());
     }
 
     public <T> RemoteObject<T> call(SerializableSupplier<T> lambda) throws RemoteException {

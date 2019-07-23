@@ -1,6 +1,9 @@
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import compiler.JavaCompiler;
+import server.SafeCodeLibrary;
 import server.Slave;
 import slave.IncorrectSlaveException;
 import slave.RemoteObject;
@@ -12,6 +15,10 @@ import java.time.Duration;
 import java.time.Instant;
 
 public class Tests {
+    @BeforeClass
+    public static void initialize() {
+        SafeCodeLibrary.initialiseWithClassLoaders(1234, 1235, JavaCompiler.getClassLoader());
+    }
     static class Adder implements Serializable {
         int calculateNumber(int a, int b) {
             return a + b;
@@ -20,7 +27,7 @@ public class Tests {
 
     @Test
     public void basicTest() throws InterruptedException, NotBoundException, IOException {
-        Slave slave = new Slave(System.getProperty("java.class.path"));
+        Slave slave = new Slave();
         RemoteObject<Adder> c = slave.call(Adder::new);
         RemoteObject<Integer> i = c.call(a -> a.calculateNumber(5, 6));
         Assert.assertEquals(i.get(), 11, 1);
@@ -40,7 +47,7 @@ public class Tests {
 
     @Test
     public void multiTest() throws InterruptedException, NotBoundException, IOException {
-        Slave slave = new Slave(System.getProperty("java.class.path"));
+        Slave slave = new Slave();
         RemoteObject<A> a1 = slave.call(() -> new A(3));
         RemoteObject<A> a2 = slave.call(() -> new A(5));
         RemoteObject<A> a3 = slave.call(a1, a2, A::another);
@@ -54,8 +61,8 @@ public class Tests {
     @Test(expected = IncorrectSlaveException.class)
     public void testIncorrectSlave() throws InterruptedException, NotBoundException, IOException {
         //Start two slaves, and then try to call a function on another slave
-        Slave slave = new Slave(System.getProperty("java.class.path"));
-        Slave slave2 = new Slave(System.getProperty("java.class.path"));
+        Slave slave = new Slave();
+        Slave slave2 = new Slave();
         RemoteObject<LocalAdder> c = slave.call(LocalAdder::new);
         slave2.call(c, c2 -> c2);
     }
@@ -75,8 +82,8 @@ public class Tests {
 
     @Test
     public void copyObject() throws InterruptedException, NotBoundException, IOException {
-        Slave slave = new Slave(System.getProperty("java.class.path"));
-        Slave slave2 = new Slave(System.getProperty("java.class.path"));
+        Slave slave = new Slave();
+        Slave slave2 = new Slave();
         RemoteObject<LocalAdder> c = slave.call(LocalAdder::new);
         Assert.assertEquals(c.call(t -> t.addToBase(5)).get(), 15, 0);
         RemoteObject<LocalAdder> c2 = c.copy(slave2);
@@ -88,8 +95,8 @@ public class Tests {
 
     @Test
     public void moveObject() throws InterruptedException, NotBoundException, IOException {
-        Slave slave = new Slave(System.getProperty("java.class.path"));
-        Slave slave2 = new Slave(System.getProperty("java.class.path"));
+        Slave slave = new Slave();
+        Slave slave2 = new Slave();
         RemoteObject<LocalAdder> c = slave.call(LocalAdder::new);
         Assert.assertEquals(c.call(t -> t.addToBase(5)).get(), 15, 0);
         RemoteObject<LocalAdder> c2 = c.move(slave2);
@@ -126,7 +133,7 @@ public class Tests {
             Assert.assertEquals(expected, t.local, 0);
             timeMillisDirect += Duration.between(start, end).toMillis();
             start = Instant.now();
-            Slave slave = new Slave(System.getProperty("java.class.path"));
+            Slave slave = new Slave();
             RemoteObject<TimingTest> test = slave.call(TimingTest::new);
             test.run(TimingTest::addAll);
             t = test.get();
@@ -140,17 +147,18 @@ public class Tests {
 
     @Test
     public void test() throws Exception {
-//        JavaCompiler.compile(
-//                        "import java.io.Serializable;" +
-//                        "public class Test implements Serializable, test.TestIntf {" +
-//                        "public void printSomething() {System.out.println(\"test\");}" +
-//                        "}", "Test");
-//        test.TestIntf p = (test.TestIntf) clazz.getDeclaredConstructor().newInstance();
-//        Slave slave = new Slave(System.getProperty("java.class.path"));
-//        slave.call(() -> {
-//            p.printSomething();
-//            System.out.println(p);
-//            return p;
-//        });
+        Class<?> clazz = JavaCompiler.compile(
+                "public class Test {" +
+                        "public Test() {System.out.println(\"test\");}" +
+                        "}", "Test");
+        Slave slave = new Slave();
+        slave.call(() -> {
+            try {
+                clazz.newInstance();
+            } catch (InstantiationException | IllegalAccessException e) {
+                e.printStackTrace();
+            }
+            return "";
+        });
     }
 }

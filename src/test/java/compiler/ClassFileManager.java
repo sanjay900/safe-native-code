@@ -1,19 +1,28 @@
 package compiler;
 
-import javax.tools.*;
+import org.apache.commons.io.FilenameUtils;
+
 import javax.tools.JavaCompiler;
+import javax.tools.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLStreamHandler;
 import java.security.SecureClassLoader;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A class file manager designed to deal with files being stored in memory
  */
 public class ClassFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> {
     //A map of strings to class objects, so that we can handle multiple files.
-    private Map<String,CompiledMemoryFile> classMap = new HashMap<>();
+    private Map<String, CompiledMemoryFile> classMap = new HashMap<>();
     /**
      * Instance of ClassLoader
      */
@@ -25,8 +34,20 @@ public class ClassFileManager extends ForwardingJavaFileManager<StandardJavaFile
      *
      * @param standardManager standard
      */
-    public ClassFileManager(StandardJavaFileManager standardManager) {
+    ClassFileManager(StandardJavaFileManager standardManager) {
         super(standardManager);
+        URL.setURLStreamHandlerFactory(protocol -> "dynamicclass".equals(protocol) ? new URLStreamHandler() {
+            protected URLConnection openConnection(URL url) {
+                return new URLConnection(url) {
+                    public void connect() {}
+
+                    @Override
+                    public InputStream getInputStream() {
+                        return new ByteArrayInputStream(classMap.get(url.getPath()).getBytes());
+                    }
+                };
+            }
+        } : null);
         this.classLoader = new SecureClassLoader() {
             @Override
             protected Class<?> findClass(String name)
@@ -37,28 +58,35 @@ public class ClassFileManager extends ForwardingJavaFileManager<StandardJavaFile
                 }
                 byte[] b = jclassObject.getBytes();
                 //Check if the file starts with the compiled magic numbers
-                if (Arrays.equals(Arrays.copyOf(b,4), COMPILED_MAGIC)) {
+                if (Arrays.equals(Arrays.copyOf(b, 4), COMPILED_MAGIC)) {
                     return super.defineClass(name, jclassObject
                             .getBytes(), 0, b.length);
                 }
-                compileSource(new MemorySourceFile(name,new String(b)));
+                compileSource(new MemorySourceFile(name, new String(b)));
                 //Now that we have compiled the class, running this function
                 //again should result in it picking up a compiled class.
                 return findClass(name);
             }
 
             @Override
-            public InputStream getResourceAsStream(String name) {
-                if (!classMap.containsKey(name)) {
-                    return super.getResourceAsStream(name);
+            public URL getResource(String name) {
+                //Change from a url syntax to a class syntax, and strip away .class
+                String javaName = CompilerUtils.urlToJava(name);
+                if (!classMap.containsKey(javaName)) {
+                    return super.getResource(name);
                 }
-                return new ByteArrayInputStream(classMap.get(name).getBytes());
+                try {
+                    return new URL("dynamicclass:"+javaName);
+                } catch (MalformedURLException e) {
+                    return null;
+                }
             }
         };
     }
 
     /**
      * Compile a JavaFileObject using this file manager
+     *
      * @param obj the file to compileAndGet
      */
     private void compileSource(JavaFileObject obj) {
@@ -68,6 +96,7 @@ public class ClassFileManager extends ForwardingJavaFileManager<StandardJavaFile
                 Collections.emptyList(), null, Collections.singletonList(obj));
         compilerTask.call();
     }
+
     /**
      * Will be used by us to get the class loader for our
      * compiled class. It creates an anonymous class
@@ -87,17 +116,17 @@ public class ClassFileManager extends ForwardingJavaFileManager<StandardJavaFile
      */
     @Override
     public JavaFileObject getJavaFileForOutput(Location location,
-                                               String className, JavaFileObject.Kind kind, FileObject sibling)
-            throws IOException {
+                                               String className, JavaFileObject.Kind kind, FileObject sibling) {
         CompiledMemoryFile compiledCode = new CompiledMemoryFile(className, kind);
         classMap.put(className, compiledCode);
         return compiledCode;
     }
+
     @Override
     public boolean isSameFile(FileObject a, FileObject b) {
         return a.getName().equals(b.getName());
     }
 
     //Compiled java classes start with the magic number 0xCAFEBABE
-    private static final byte[] COMPILED_MAGIC = new byte[]{(byte)0xCA,(byte)0xFE,(byte)0xBA,(byte)0xBE};
+    private static final byte[] COMPILED_MAGIC = new byte[]{(byte) 0xCA, (byte) 0xFE, (byte) 0xBA, (byte) 0xBE};
 }
