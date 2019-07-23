@@ -140,17 +140,17 @@ public class Tests {
 
     @Test
     public void test() throws Exception {
-        Class<?> clazz = JavaCompiler.compileAndGet(
-                        "import java.io.Serializable;" +
-                        "public class Test implements Serializable, TestIntf {" +
-                        "public void printSomething() {System.out.println(\"test\");}" +
-                        "}", "Test");
-        TestIntf p = (TestIntf) clazz.newInstance();
-        Slave slave = new Slave(System.getProperty("java.class.path"));
-        slave.call(() -> {
-            p.printSomething();
-            System.out.println(p);
-            return p;
-        });
+//        JavaCompiler.compile(
+//                        "import java.io.Serializable;" +
+//                        "public class Test implements Serializable, test.TestIntf {" +
+//                        "public void printSomething() {System.out.println(\"test\");}" +
+//                        "}", "Test");
+//        test.TestIntf p = (test.TestIntf) clazz.getDeclaredConstructor().newInstance();
+//        Slave slave = new Slave(System.getProperty("java.class.path"));
+//        slave.call(() -> {
+//            p.printSomething();
+//            System.out.println(p);
+//            return p;
+//        });
     }
 }

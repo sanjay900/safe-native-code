@@ -1,6 +1,7 @@
 package server;
 
 import slave.RemoteObject;
+import slave.SerializableSupplier;
 
 import java.io.Serializable;
 import java.rmi.Remote;

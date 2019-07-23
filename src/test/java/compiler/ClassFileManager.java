@@ -2,7 +2,9 @@ package compiler;
 
 import javax.tools.*;
 import javax.tools.JavaCompiler;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.SecureClassLoader;
 import java.util.*;
 
@@ -43,6 +45,14 @@ public class ClassFileManager extends ForwardingJavaFileManager<StandardJavaFile
                 //Now that we have compiled the class, running this function
                 //again should result in it picking up a compiled class.
                 return findClass(name);
+            }
+
+            @Override
+            public InputStream getResourceAsStream(String name) {
+                if (!classMap.containsKey(name)) {
+                    return super.getResourceAsStream(name);
+                }
+                return new ByteArrayInputStream(classMap.get(name).getBytes());
             }
         };
     }

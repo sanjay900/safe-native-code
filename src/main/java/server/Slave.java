@@ -2,16 +2,14 @@ package server;
 
 import slave.ISlaveMain;
 import slave.RemoteObject;
+import slave.SerializableSupplier;
 import slave.SlaveMain;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.NotBoundException;
-import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -22,31 +20,22 @@ import java.util.UUID;
  */
 public class Slave implements ISlave {
     private ISlaveMain remoteSlave;
-    private static Registry registry;
-
-    static {
-        try {
-            registry = LocateRegistry.createRegistry(1099);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
-    }
 
     public Slave(String classpath, String... jvmOptions) throws IOException, InterruptedException, NotBoundException {
-        System.setSecurityManager (new RMISecurityManager());
         Path javaProcess = Paths.get(System.getProperty("java.home"), "bin", "java");
         UUID uuid = UUID.randomUUID();
         List<String> args = new ArrayList<>();
         args.add(javaProcess.toString());
         args.addAll(Arrays.asList(jvmOptions));
-        args.addAll(Arrays.asList("-cp", classpath, SlaveMain.class.getName(),"-Djava.security.policy=/home/sanjay/Code/safeNativeCode/src/main/resources/all.policy", uuid.toString()));
+        args.add("-Djava.rmi.server.codebase=" + RemoteCodeManager.getCodebase());
+        args.addAll(Arrays.asList("-cp", RemoteCodeManager.getRemoteJar().getAbsolutePath(), SlaveMain.class.getName(), RemoteCodeManager.getRMIPort() + "", uuid.toString()));
         Process process = new ProcessBuilder(args.toArray(new String[0])).inheritIO().start();
         //End the remoteSlave process if the parent process ends.
         Runtime.getRuntime().addShutdownHook(new Thread(process::destroy));
-        while (!Arrays.asList(registry.list()).contains(uuid.toString())) {
+        while (!Arrays.asList(RemoteCodeManager.getRegistry().list()).contains(uuid.toString())) {
             Thread.sleep(10);
         }
-        remoteSlave = (ISlaveMain) registry.lookup(uuid.toString());
+        remoteSlave = (ISlaveMain) RemoteCodeManager.getRegistry().lookup(uuid.toString());
     }
 
     public <T> RemoteObject<T> call(SerializableSupplier<T> lambda) throws RemoteException {

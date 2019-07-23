@@ -1,7 +1,5 @@
 package slave;
 
-import server.SerializableConsumer;
-import server.SerializableFunction;
 import server.Slave;
 
 import java.io.Serializable;

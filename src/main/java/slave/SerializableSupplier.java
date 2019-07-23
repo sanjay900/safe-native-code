@@ -1,4 +1,4 @@
-package server;
+package slave;
 
 import java.io.Serializable;
 import java.util.function.Consumer;

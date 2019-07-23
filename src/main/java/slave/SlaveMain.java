@@ -1,9 +1,5 @@
 package slave;
 
-import server.SerializableConsumer;
-import server.SerializableFunction;
-import server.SerializableSupplier;
-
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -19,8 +15,10 @@ public class SlaveMain implements ISlaveMain {
 
     private transient Map<RemoteObject, Object> localObjects = new HashMap<>();
 
-    private SlaveMain(UUID uuid) throws RemoteException {
-        Registry registry = LocateRegistry.getRegistry(1099);
+    private SlaveMain(int port, UUID uuid) throws RemoteException {
+        //We need a security manager otherwise we can't load remote classes.
+        System.setSecurityManager (new SlaveSecurityManager());
+        Registry registry = LocateRegistry.getRegistry(port);
         ISlaveMain stub = (ISlaveMain) UnicastRemoteObject.exportObject(this, 0);
         registry.rebind(uuid.toString(), stub);
     }
@@ -130,6 +128,6 @@ public class SlaveMain implements ISlaveMain {
     }
 
     public static void main(String[] args) throws RemoteException {
-        new SlaveMain(UUID.fromString(args[0]));
+        new SlaveMain(Integer.parseInt(args[args.length-2]), UUID.fromString(args[args.length-1]));
     }
 }

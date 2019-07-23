@@ -1,8 +1,6 @@
 package slave;
 
 import server.ISlave;
-import server.SerializableConsumer;
-import server.SerializableFunction;
 
 import java.rmi.RemoteException;
 
