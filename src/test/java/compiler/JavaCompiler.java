@@ -21,7 +21,7 @@ public class JavaCompiler {
         }
         try {
             return manager.getClassLoader(null).loadClass(className);
-        } catch (Exception ignored) {
+        } catch (ClassNotFoundException ignored) {
             return null;
         }
     }

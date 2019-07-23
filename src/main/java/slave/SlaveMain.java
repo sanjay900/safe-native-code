@@ -1,9 +1,12 @@
 package slave;
 
+import slave.security.SlavePolicy;
+
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.security.Policy;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -17,7 +20,8 @@ public class SlaveMain implements ISlaveMain {
 
     private SlaveMain(int port, UUID uuid) throws RemoteException {
         //We need a security manager otherwise we can't load remote classes.
-        System.setSecurityManager (new SlaveSecurityManager());
+        Policy.setPolicy(new SlavePolicy());
+        System.setSecurityManager(new SecurityManager());
         Registry registry = LocateRegistry.getRegistry(port);
         ISlaveMain stub = (ISlaveMain) UnicastRemoteObject.exportObject(this, 0);
         registry.rebind(uuid.toString(), stub);

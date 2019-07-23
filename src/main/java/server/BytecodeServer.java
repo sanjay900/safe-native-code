@@ -12,8 +12,7 @@ import static spark.Spark.get;
 import static spark.Spark.port;
 
 /**
- * Start a web server hosting classes from a specific set of classloaders
- * Also supports being run in agent mode. This is useful if Classes are loaded dynamically, and the method for loading these classes dynamically does not expose raw byte code.
+ * Start a web server hosting classes from a specific set of ClassLoaders or by using an Agent to host all classes
  */
 public class BytecodeServer implements ClassFileTransformer {
     /**
@@ -26,9 +25,9 @@ public class BytecodeServer implements ClassFileTransformer {
         instrumentation.addTransformer(new BytecodeServer(Integer.parseInt(args), ClassLoader.getSystemClassLoader()));
     }
 
-    public BytecodeServer(int port, ClassLoader... classLoaders) {
+    BytecodeServer(int port, ClassLoader... classLoaders) {
         port(port);
-        //Start a webserver that serves any class from classFiles
+        //Start a web server that serves any class from classFiles
         get("/*", (req, res) -> {
             if (classFiles.containsKey(req.pathInfo())) {
                 return classFiles.get(req.pathInfo());
