@@ -1,12 +1,12 @@
 package slave;
 
-import slave.security.SlavePolicy;
+import server.BytecodeLookup;
 
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.security.Policy;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -18,11 +18,9 @@ public class SlaveMain implements ISlaveMain {
 
     private transient Map<RemoteObject, Object> localObjects = new HashMap<>();
 
-    private SlaveMain(int port, UUID uuid) throws RemoteException {
-        //We need a security manager otherwise we can't load remote classes.
-        Policy.setPolicy(new SlavePolicy());
-        System.setSecurityManager(new SecurityManager());
+    private SlaveMain(int port, UUID uuid) throws RemoteException, NotBoundException {
         Registry registry = LocateRegistry.getRegistry(port);
+        SlaveClassloader.lookup = (BytecodeLookup) registry.lookup("bytecodeLookup");
         ISlaveMain stub = (ISlaveMain) UnicastRemoteObject.exportObject(this, 0);
         registry.rebind(uuid.toString(), stub);
     }
@@ -131,7 +129,7 @@ public class SlaveMain implements ISlaveMain {
         return r;
     }
 
-    public static void main(String[] args) throws RemoteException {
-        new SlaveMain(Integer.parseInt(args[args.length-2]), UUID.fromString(args[args.length-1]));
+    public static void main(String[] args) throws RemoteException, NotBoundException {
+        new SlaveMain(Integer.parseInt(args[args.length - 2]), UUID.fromString(args[args.length - 1]));
     }
 }

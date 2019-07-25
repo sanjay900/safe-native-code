@@ -27,7 +27,7 @@ public class Slave implements ISlave {
         List<String> args = new ArrayList<>();
         args.add(javaProcess.toString());
         args.addAll(Arrays.asList(jvmOptions));
-        args.add("-Djava.rmi.server.codebase=" + SafeCodeLibrary.getCodebase());
+        args.add("-Djava.system.class.loader=slave.SlaveClassloader");
         args.addAll(Arrays.asList("-cp", System.getProperty("java.class.path"), SlaveMain.class.getName(), SafeCodeLibrary.getRMIPort() + "", uuid.toString()));
         Process process = new ProcessBuilder(args.toArray(new String[0])).inheritIO().start();
         //End the remoteSlave process if the parent process ends.
