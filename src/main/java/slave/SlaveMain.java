@@ -1,9 +1,8 @@
 package slave;
 
-import com.rits.cloning.Cloner;
-import server.RemoteObject;
-import slave.security.SlavePolicy;
 import server.BytecodeLookup;
+import server.RemoteObject;
+
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
