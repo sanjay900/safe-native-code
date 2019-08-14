@@ -11,13 +11,14 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
 import java.time.Duration;
 import java.time.Instant;
 
 public class Tests {
     @BeforeClass
-    public static void initialize() {
-        SafeCodeLibrary.initialiseWithClassLoaders(1234, 1235, JavaCompiler.getClassLoader());
+    public static void initialize() throws RemoteException {
+        SafeCodeLibrary.initialiseWithClassLoaders(1234, JavaCompiler.getClassLoader());
     }
 
     static class Adder implements Serializable {
