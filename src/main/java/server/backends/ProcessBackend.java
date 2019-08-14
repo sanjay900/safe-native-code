@@ -1,40 +1,74 @@
 package server.backends;
 
+import org.apache.commons.io.FilenameUtils;
+import server.BytecodeServer;
 import server.RemoteObject;
-import server.SafeCodeLibrary;
 import slave.ISlaveMain;
 import slave.SerializableConsumer;
 import slave.SerializableSupplier;
 import slave.SlaveMain;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.File;
+import java.net.URISyntaxException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-public abstract class SlaveBackend implements Backend {
-    ISlaveMain remoteSlave;
+abstract class ProcessBackend implements Backend {
+    private ISlaveMain remoteSlave;
+    protected int rmiPort = -1;
+    private Registry registry;
+    private UUID uuid = UUID.randomUUID();
+    private ClassLoader[] classLoaders;
 
-    public SlaveBackend(String... jvmOptions) throws IOException, InterruptedException, NotBoundException {
-        Path javaProcess = Paths.get(System.getProperty("java.home"), "bin", "java");
-        UUID uuid = UUID.randomUUID();
+    public ProcessBackend(int rmiPort) {
+        this.rmiPort = rmiPort;
+    }
+
+    public ProcessBackend(int rmiPort, ClassLoader... classLoaders) {
+        this.rmiPort = rmiPort;
+        this.classLoaders = classLoaders;
+    }
+
+    String[] getJavaCommandArgs(String javaCommand, boolean jarWithPath) {
         List<String> args = new ArrayList<>();
-        args.add(javaProcess.toString());
-        args.addAll(Arrays.asList(jvmOptions));
+        args.add(javaCommand);
         args.add("-Djava.system.class.loader=slave.SlaveClassloader");
-        args.addAll(Arrays.asList("-cp", System.getProperty("java.class.path"), SlaveMain.class.getName(), SafeCodeLibrary.getRMIPort() + "", uuid.toString()));
-        Process process = new ProcessBuilder(args.toArray(new String[0])).inheritIO().start();
-        //End the remoteSlave process if the parent process ends.
-        Runtime.getRuntime().addShutdownHook(new Thread(process::destroy));
-        while (!Arrays.asList(SafeCodeLibrary.getRegistry().list()).contains(uuid.toString())) {
-            Thread.sleep(10);
+        args.addAll(Arrays.asList("-cp", jarWithPath ? getJar().getAbsolutePath() : getJar().getName(), SlaveMain.class.getName(), rmiPort + "", uuid.toString()));
+        return args.toArray(new String[0]);
+    }
+
+    public static File getJar() {
+        try {
+            File jar = new File(ProcessBackend.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+            if (FilenameUtils.getExtension(jar.getPath()).equals("jar")) {
+                return jar;
+            }
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
         }
-        remoteSlave = (ISlaveMain) SafeCodeLibrary.getRegistry().lookup(uuid.toString());
+        return new File("build/libs/safeNativeCode.jar");
+    }
+
+    void initialise() throws RemoteException, InterruptedException, NotBoundException {
+        while (true) {
+            try {
+                registry = LocateRegistry.getRegistry(rmiPort);
+                registry.lookup(uuid.toString());
+                break;
+            } catch (NotBoundException | RemoteException e) {
+                Thread.sleep(10);
+            }
+        }
+        if (classLoaders != null) {
+            registry.rebind("bytecodeLookup", new BytecodeServer(classLoaders));
+        }
+        remoteSlave = (ISlaveMain) registry.lookup(uuid.toString());
     }
 
     @Override

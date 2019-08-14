@@ -1,4 +1,5 @@
 plugins {
+    id 'com.github.johnrengelman.shadow' version '5.1.0'
     id 'java'
 }
 
@@ -19,10 +20,15 @@ dependencies {
     compile group: 'commons-io', name: 'commons-io', version: '2.6'
     compile group: 'net.bytebuddy', name: 'byte-buddy-agent', version: '1.9.15'
     compile group: 'uk.com.robust-it', name: 'cloning', version: '1.9.12'
+    compile group: 'com.github.docker-java', name: 'docker-java', version: '3.1.5'
+    compile group: 'javax.activation', name: 'activation', version: '1.1.1'
 
 }
-jar {
-    archiveName = "${rootProject.name}-${rootProject.version}.jar"
+
+shadowJar {
+    baseName = 'safeNativeCode'
+    classifier = null
+    version = null
     manifest {
         attributes(
                 'Agent-Class': 'server.BytecodeServer',
@@ -34,4 +40,4 @@ jar {
         )
     }
 }
-
+tasks.build.dependsOn tasks.shadowJar

@@ -7,7 +7,7 @@ import slave.SerializableSupplier;
 
 import java.rmi.RemoteException;
 
-public class Direct implements Backend {
+public class DirectBackend implements Backend {
 
     public class LocalRemoteObject<T> implements RemoteObject<T> {
         T obj;

@@ -19,11 +19,21 @@ public class SlaveMain implements ISlaveMain {
 
     private transient Map<SlaveRemoteObject, Object> localObjects = new HashMap<>();
 
-    private SlaveMain(int port, UUID uuid) throws RemoteException, NotBoundException {
-        Registry registry = LocateRegistry.getRegistry(port);
-        SlaveClassloader.lookup = (BytecodeLookup) registry.lookup("bytecodeLookup");
+    private SlaveMain(int port, UUID uuid) throws RemoteException, InterruptedException {
+        Registry registry = LocateRegistry.createRegistry(port);
         ISlaveMain stub = (ISlaveMain) UnicastRemoteObject.exportObject(this, 0);
         registry.rebind(uuid.toString(), stub);
+
+        //Wait for the main process has given us a classloader.
+        while (true) {
+            try {
+                SlaveClassloader.lookup = (BytecodeLookup) registry.lookup("bytecodeLookup");
+                break;
+            } catch (NotBoundException ignored) {
+                Thread.sleep(10);
+            }
+        }
+        System.out.println("Bound!");
     }
 
     @Override
@@ -105,7 +115,7 @@ public class SlaveMain implements ISlaveMain {
         return r;
     }
 
-    public static void main(String[] args) throws RemoteException, NotBoundException {
+    public static void main(String[] args) throws RemoteException, InterruptedException {
         new SlaveMain(Integer.parseInt(args[args.length - 2]), UUID.fromString(args[args.length - 1]));
     }
 }
