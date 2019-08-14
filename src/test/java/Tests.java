@@ -3,9 +3,9 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import server.SafeCodeLibrary;
-import server.Slave;
+import server.RemoteObject;
+import server.backends.RemoteBackend;
 import slave.IncorrectSlaveException;
-import slave.RemoteObject;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -28,8 +28,8 @@ public class Tests {
 
     @Test
     public void basicTest() throws InterruptedException, NotBoundException, IOException {
-        Slave slave = new Slave();
-        RemoteObject<Adder> c = slave.call(Adder::new);
+        RemoteBackend RemoteBackend = new RemoteBackend();
+        RemoteObject<Adder> c = RemoteBackend.call(Adder::new);
         RemoteObject<Integer> i = c.call(a -> a.calculateNumber(5, 6));
         Assert.assertEquals(i.get(), 11, 1);
     }
@@ -48,24 +48,24 @@ public class Tests {
 
     @Test
     public void multiTest() throws InterruptedException, NotBoundException, IOException {
-        Slave slave = new Slave();
-        RemoteObject<A> a1 = slave.call(() -> new A(3));
-        RemoteObject<A> a2 = slave.call(() -> new A(5));
-        RemoteObject<A> a3 = slave.call(a1, a2, A::another);
+        RemoteBackend RemoteBackend = new RemoteBackend();
+        RemoteObject<A> a1 = RemoteBackend.call(() -> new A(3));
+        RemoteObject<A> a2 = RemoteBackend.call(() -> new A(5));
+        RemoteObject<A> a3 = RemoteBackend.call(a1, a2, A::another);
         A _a2 = new A(3);
         RemoteObject<A> a323 = a1.call(la1 -> la1.another(_a2));
-        RemoteObject<A> a32 = slave.call(a1, a323, A::another);
+        RemoteObject<A> a32 = RemoteBackend.call(a1, a323, A::another);
         Assert.assertEquals(a3.call(s -> s.f).get(), 8, 0);
         Assert.assertEquals(a32.call(s -> s.f).get(), 9, 0);
     }
 
     @Test(expected = IncorrectSlaveException.class)
-    public void testIncorrectSlave() throws InterruptedException, NotBoundException, IOException {
-        //Start two slaves, and then try to call a function on another slave
-        Slave slave = new Slave();
-        Slave slave2 = new Slave();
-        RemoteObject<LocalAdder> c = slave.call(LocalAdder::new);
-        slave2.call(c, c2 -> c2);
+    public void testIncorrectRemoteBackend() throws InterruptedException, NotBoundException, IOException {
+        //Start two RemoteBackends, and then try to call a function on another RemoteBackend
+        RemoteBackend RemoteBackend = new RemoteBackend();
+        RemoteBackend RemoteBackend2 = new RemoteBackend();
+        RemoteObject<LocalAdder> c = RemoteBackend.call(LocalAdder::new);
+        RemoteBackend2.call(c, c2 -> c2);
     }
 
     static class LocalAdder implements Serializable {
@@ -78,33 +78,24 @@ public class Tests {
         void setBase(int base) {
             this.base = base;
         }
+
+        int getBase() {
+            return base;
+        }
     }
 
 
     @Test
     public void copyObject() throws InterruptedException, NotBoundException, IOException {
-        Slave slave = new Slave();
-        Slave slave2 = new Slave();
-        RemoteObject<LocalAdder> c = slave.call(LocalAdder::new);
+        RemoteBackend RemoteBackend = new RemoteBackend();
+        RemoteBackend RemoteBackend2 = new RemoteBackend();
+        RemoteObject<LocalAdder> c = RemoteBackend.call(LocalAdder::new);
         Assert.assertEquals(c.call(t -> t.addToBase(5)).get(), 15, 0);
-        RemoteObject<LocalAdder> c2 = c.copy(slave2);
+        RemoteObject<LocalAdder> c2 = c.copy(RemoteBackend2);
         c2.run(s -> s.setBase(15));
         //Since we copied the object, the original object should not be modified in the process.
-        Assert.assertEquals(c2.call(t -> t.addToBase(5)).get(), 20, 0);
         Assert.assertEquals(c.call(t -> t.addToBase(5)).get(), 15, 0);
-    }
-
-    @Test
-    public void moveObject() throws InterruptedException, NotBoundException, IOException {
-        Slave slave = new Slave();
-        Slave slave2 = new Slave();
-        RemoteObject<LocalAdder> c = slave.call(LocalAdder::new);
-        Assert.assertEquals(c.call(t -> t.addToBase(5)).get(), 15, 0);
-        RemoteObject<LocalAdder> c2 = c.move(slave2);
-        c2.run(s -> s.setBase(15));
-        //We moved the object, so the original object should represent the new object.
         Assert.assertEquals(c2.call(t -> t.addToBase(5)).get(), 20, 0);
-        Assert.assertEquals(c.call(t -> t.addToBase(5)).get(), 20, 0);
     }
 
     public static class TimingTest implements Serializable {
@@ -125,7 +116,7 @@ public class Tests {
     public void time() throws InterruptedException, NotBoundException, IOException {
         long expected = 49999995000000L;
         int timeMillisDirect = 0;
-        int timeMillisSlave = 0;
+        int timeMillisRemoteBackend = 0;
         for (int i = 0; i < 20; i++) {
             Instant start = Instant.now();
             TimingTest t = new TimingTest();
@@ -134,16 +125,16 @@ public class Tests {
             Assert.assertEquals(expected, t.local, 0);
             timeMillisDirect += Duration.between(start, end).toMillis();
             start = Instant.now();
-            Slave slave = new Slave();
-            RemoteObject<TimingTest> test = slave.call(TimingTest::new);
+            RemoteBackend RemoteBackend = new RemoteBackend();
+            RemoteObject<TimingTest> test = RemoteBackend.call(TimingTest::new);
             test.run(TimingTest::addAll);
             t = test.get();
             end = Instant.now();
             Assert.assertEquals(expected, t.local, 0);
-            timeMillisSlave += Duration.between(start, end).toMillis();
+            timeMillisRemoteBackend += Duration.between(start, end).toMillis();
         }
         System.out.println("Time taken for direct: " + timeMillisDirect / 20 + " milliseconds");
-        System.out.println("Time taken for slave: " + timeMillisSlave / 20 + " milliseconds");
+        System.out.println("Time taken for RemoteBackend: " + timeMillisRemoteBackend / 20 + " milliseconds");
     }
 
     @Test
@@ -152,8 +143,8 @@ public class Tests {
                 "public class Test {" +
                         "public String getData() {return \"test\";}" +
                         "}", "Test");
-        Slave slave = new Slave();
-        Assert.assertEquals("test", slave.call(() -> {
+        RemoteBackend RemoteBackend = new RemoteBackend();
+        Assert.assertEquals("test", RemoteBackend.call(() -> {
             try {
                 return clazz.newInstance();
             } catch (InstantiationException | IllegalAccessException e) {

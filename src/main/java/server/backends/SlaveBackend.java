@@ -1,41 +1,23 @@
-package server;
+package server.backends;
 
+import server.RemoteObject;
 import slave.ISlaveMain;
-import slave.RemoteObject;
+import slave.SerializableConsumer;
 import slave.SerializableSupplier;
-import slave.SlaveMain;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
 
-/**
- * This class is responsible for starting up the remote jvm and
- */
-public class Slave implements ISlave {
-    private ISlaveMain remoteSlave;
+public abstract class SlaveBackend implements Backend {
+    ISlaveMain remoteSlave;
 
-    public Slave(String... jvmOptions) throws IOException, InterruptedException, NotBoundException {
-        Path javaProcess = Paths.get(System.getProperty("java.home"), "bin", "java");
-        UUID uuid = UUID.randomUUID();
-        List<String> args = new ArrayList<>();
-        args.add(javaProcess.toString());
-        args.addAll(Arrays.asList(jvmOptions));
-        args.add("-Djava.rmi.server.codebase=" + SafeCodeLibrary.getCodebase());
-        args.addAll(Arrays.asList("-cp", System.getProperty("java.class.path"), SlaveMain.class.getName(), SafeCodeLibrary.getRMIPort() + "", uuid.toString()));
-        Process process = new ProcessBuilder(args.toArray(new String[0])).inheritIO().start();
-        //End the remoteSlave process if the parent process ends.
-        Runtime.getRuntime().addShutdownHook(new Thread(process::destroy));
-        while (!Arrays.asList(SafeCodeLibrary.getRegistry().list()).contains(uuid.toString())) {
-            Thread.sleep(10);
-        }
-        remoteSlave = (ISlaveMain) SafeCodeLibrary.getRegistry().lookup(uuid.toString());
+    @Override
+    public <T> void call(RemoteObject<T> obj, SerializableConsumer<T> lambda) throws RemoteException {
+        remoteSlave.call(obj, lambda);
+    }
+
+    @Override
+    public <T> RemoteObject<T> copy(RemoteObject<T> original) throws RemoteException {
+        return remoteSlave.copy(original);
     }
 
     public <T> RemoteObject<T> call(SerializableSupplier<T> lambda) throws RemoteException {
@@ -92,7 +74,4 @@ public class Slave implements ISlave {
         return remoteSlave.call(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, lambda);
     }
 
-    public ISlaveMain getRemoteSlaveJVM() {
-        return remoteSlave;
-    }
 }

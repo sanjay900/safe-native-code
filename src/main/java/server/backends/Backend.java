@@ -1,17 +1,13 @@
-package server;
+package server.backends;
 
-import slave.RemoteObject;
+import server.RemoteObject;
+import slave.SerializableConsumer;
 import slave.SerializableSupplier;
 
 import java.io.Serializable;
-import java.rmi.Remote;
 import java.rmi.RemoteException;
 
-
-/**
- * A ISlave is just an api for controlling a remote JVM instance from the server
- */
-public interface ISlave extends Remote {
+public interface Backend {
     interface One<R, T1> extends Serializable {
         R accept(T1 args);
     }
@@ -52,7 +48,11 @@ public interface ISlave extends Remote {
         R accept(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9, T10 arg10);
     }
 
+    <T> RemoteObject<T> copy(RemoteObject<T> original) throws RemoteException;
     <R> RemoteObject<R> call(SerializableSupplier<R> lambda) throws RemoteException;
+
+
+    <T> void call(RemoteObject<T> obj, SerializableConsumer<T> lambda) throws RemoteException;
 
     <R, T> RemoteObject<R> call(RemoteObject<T> t, One<R, T> lambda) throws RemoteException;
 

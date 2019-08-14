@@ -45,12 +45,12 @@ public class SafeCodeLibrary {
         SafeCodeLibrary.rmiPort = rmiPort;
     }
 
-    static String getCodebase() {
+    public static String getCodebase() {
         if (codebasePort < 0) throw new RuntimeException("Remote Code Manager not initialized!");
         return "http://localhost:" + codebasePort + "/";
     }
 
-    static Registry getRegistry() {
+    public static Registry getRegistry() {
         return registry;
     }
 

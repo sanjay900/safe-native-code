@@ -18,6 +18,8 @@ dependencies {
     compile "com.sparkjava:spark-core:2.9.1"
     compile group: 'commons-io', name: 'commons-io', version: '2.6'
     compile group: 'net.bytebuddy', name: 'byte-buddy-agent', version: '1.9.15'
+    compile group: 'uk.com.robust-it', name: 'cloning', version: '1.9.12'
+
 }
 jar {
     archiveName = "${rootProject.name}-${rootProject.version}.jar"
