@@ -35,8 +35,6 @@ public class VagrantBackend extends ProcessBackend {
         vagrantConfig = vagrantConfig.replaceAll("<javaCommand>", String.join(" ", getJavaCommandArgs("java", false)));
         Files.write(temp.resolve("Vagrantfile"), vagrantConfig.getBytes());
         new ProcessBuilder("vagrant", "up").directory(temp.toFile()).inheritIO().start();
-        System.out.println("Starting up Vagrant VM...");
         initialise();
-        System.out.println("Vagrant VM started and connected.");
     }
 }

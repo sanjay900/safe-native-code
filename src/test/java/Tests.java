@@ -11,7 +11,9 @@ import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Tests {
@@ -107,15 +109,29 @@ public class Tests {
     }
 
     @Test
-    public void time() throws IOException, InterruptedException {
+    public void time() throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         long expected = 49999995000000L;
         Map<Backend, Long> timings = new HashMap<>();
-        Backend[] backends = new Backend[]{
-                new DirectBackend(),
-                first,
-                new DockerBackend(1111, JavaCompiler.getClassLoader()),
-                new VagrantBackend(1100, JavaCompiler.getClassLoader())
-        };
+        List<Class<? extends Backend>> backendsClasses = new ArrayList<>();
+        backendsClasses.add(DirectBackend.class);
+        backendsClasses.add(RemoteBackend.class);
+        backendsClasses.add(DockerBackend.class);
+        backendsClasses.add(VagrantBackend.class);
+        List<Backend> backends = new ArrayList<>();
+        int port = 1100;
+        ClassLoader[] loaders = new ClassLoader[]{JavaCompiler.getClassLoader()};
+        for (Class<? extends Backend> clazz : backendsClasses) {
+            System.out.println("Constructing " + clazz.getName());
+            Instant start = Instant.now();
+            try {
+                backends.add(clazz.getDeclaredConstructor(int.class, ClassLoader[].class).newInstance(port, loaders));
+            } catch (NoSuchMethodException ex) {
+                backends.add(clazz.getDeclaredConstructor().newInstance());
+            }
+            port += 100;
+            Instant end = Instant.now();
+            System.out.println("Time taken to start " + clazz.getName() + " :" + Duration.between(start, end).toMillis());
+        }
         int testCount = 20;
         for (Backend backend : backends) {
             for (int i = 0; i < testCount + 5; i++) {

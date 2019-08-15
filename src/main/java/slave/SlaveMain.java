@@ -21,20 +21,20 @@ public class SlaveMain extends UnicastRemoteObject implements ISlaveMain {
 
     private transient Map<SlaveRemoteObject, Object> localObjects = new HashMap<>();
 
+    @SuppressWarnings("unchecked")
     private SlaveMain(int port, UUID uuid) throws IOException, InterruptedException, ClassNotFoundException, IllegalAccessException, NoSuchFieldException, NotBoundException {
         super(port + 2);
-        Field f = Class.forName("sun.rmi.registry.RegistryImpl").getDeclaredField("allowedAccessCache");
-        f.setAccessible(true);
-        InetAddress localhost = InetAddress.getByName("localhost");
-        f.set(null, new Hashtable<InetAddress, InetAddress>() {
-            @Override
-            public synchronized InetAddress get(Object key) {
-                return localhost;
-            }
-        });
+
+
         Registry registry = LocateRegistry.createRegistry(port);
         registry.rebind(uuid.toString(), this);
         if (new File(".").getAbsolutePath().contains("vagrant")) {
+            //For vagrant, requests don't come from localhost, and instead come from 10.0.2.2.
+            //For vagrant, we have to proxy back the requests for bytecodeLookup back to the host, as the host isn't localhost.
+            Field f = Class.forName("sun.rmi.registry.RegistryImpl").getDeclaredField("allowedAccessCache");
+            f.setAccessible(true);
+            InetAddress host = InetAddress.getByName("10.0.2.2");
+            ((Hashtable)f.get(null)).put(host, host);
             new ProcessBuilder("socat", "tcp-l:" + (port + 1) + ",fork,reuseaddr", "tcp:10.0.2.2:" + (port + 1)).inheritIO().start();
         }
 

@@ -9,12 +9,12 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
 /**
- * Start a web server hosting classes from a specific set of ClassLoaders or by using an Agent to host all classes
+ * A class that retrieves bytecode from a specific set of ClassLoaders or BytecodeAgent
  */
-public class BytecodeServer extends UnicastRemoteObject implements BytecodeLookup {
+public class BytecodeHoster extends UnicastRemoteObject implements BytecodeLookup {
     private transient ClassLoader[] classLoaders;
 
-    public BytecodeServer(int unicastPort, ClassLoader... classLoaders) throws RemoteException {
+    public BytecodeHoster(int unicastPort, ClassLoader... classLoaders) throws RemoteException {
         super(unicastPort);
         this.classLoaders = classLoaders;
     }

@@ -2,7 +2,7 @@ package server.backends;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.SystemUtils;
-import server.BytecodeServer;
+import server.BytecodeHoster;
 import server.CLibrary;
 import server.RemoteObject;
 import slave.ISlaveMain;
@@ -88,7 +88,7 @@ abstract class ProcessBackend implements Backend {
             }
         }
         if (classLoaders != null) {
-            registry.rebind("bytecodeLookup", new BytecodeServer(rmiPort + 1, classLoaders));
+            registry.rebind("bytecodeLookup", new BytecodeHoster(rmiPort + 1, classLoaders));
         }
     }
 

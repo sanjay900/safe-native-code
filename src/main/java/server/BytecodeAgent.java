@@ -8,6 +8,9 @@ import java.rmi.registry.Registry;
 import java.security.ProtectionDomain;
 import java.util.HashMap;
 
+/**
+ * A small java agent that collects up classes that are loaded so they can be shared with another process.
+ */
 public class BytecodeAgent implements ClassFileTransformer {
     /**
      * This HashMap stores all class files that are encountered
@@ -15,7 +18,7 @@ public class BytecodeAgent implements ClassFileTransformer {
     static HashMap<String, byte[]> classFiles = new HashMap<>();
     public static void agentmain(String args, Instrumentation instrumentation) throws RemoteException {
         int port = Integer.parseInt(args);
-        BytecodeServer server = new BytecodeServer(port+1, ClassLoader.getSystemClassLoader());
+        BytecodeHoster server = new BytecodeHoster(port+1, ClassLoader.getSystemClassLoader());
         //Add a transformer that simply stores all classes encountered to classFiles
         instrumentation.addTransformer(new BytecodeAgent());
         Registry registry = LocateRegistry.createRegistry(port);

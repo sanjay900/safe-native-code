@@ -6,6 +6,10 @@ import slave.SerializableConsumer;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 
+/**
+ * RemoteObject is used for wrapping an object that is stored in a remote process
+ * @param <T> the type of object this is wrapping
+ */
 public interface RemoteObject<T> extends Serializable {
     <R> RemoteObject<R> call(Backend.One<R, T> lambda) throws RemoteException;
 
