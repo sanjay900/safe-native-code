@@ -3,15 +3,16 @@ package slave;
 import server.BytecodeLookup;
 import server.RemoteObject;
 
+import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.net.InetAddress;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * SlaveMain is the Main class run by a slave
@@ -20,27 +21,27 @@ public class SlaveMain extends UnicastRemoteObject implements ISlaveMain {
 
     private transient Map<SlaveRemoteObject, Object> localObjects = new HashMap<>();
 
-    private SlaveMain(int port, UUID uuid, boolean forwardPort) throws IOException, InterruptedException {
-        super(port+3);
-        Registry registry;
-        if (forwardPort) {
-            registry = LocateRegistry.createRegistry(port + 1);
-            //Can we replace socat with something written in java?
-            new ProcessBuilder("socat", "tcp-l:" + port + ",fork,reuseaddr", "tcp:127.0.0.1:" + (port + 1)).inheritIO().start();
-            new ProcessBuilder("socat", "tcp-l:" + (port+3) + ",fork,reuseaddr", "tcp:127.0.0.1:" + (port + 6)).inheritIO().start();
-        } else {
-            registry = LocateRegistry.createRegistry(port);
-        }
-        registry.rebind(uuid.toString(), this);
-
-        while (true) {
-            try {
-                SlaveClassloader.lookup = (BytecodeLookup) registry.lookup("bytecodeLookup");
-                break;
-            } catch (NotBoundException ignored) {
-                Thread.sleep(10);
+    private SlaveMain(int port, UUID uuid) throws IOException, InterruptedException, ClassNotFoundException, IllegalAccessException, NoSuchFieldException, NotBoundException {
+        super(port + 2);
+        Field f = Class.forName("sun.rmi.registry.RegistryImpl").getDeclaredField("allowedAccessCache");
+        f.setAccessible(true);
+        InetAddress localhost = InetAddress.getByName("localhost");
+        f.set(null, new Hashtable<InetAddress, InetAddress>() {
+            @Override
+            public synchronized InetAddress get(Object key) {
+                return localhost;
             }
+        });
+        Registry registry = LocateRegistry.createRegistry(port);
+        registry.rebind(uuid.toString(), this);
+        if (new File(".").getAbsolutePath().contains("vagrant")) {
+            new ProcessBuilder("socat", "tcp-l:" + (port + 1) + ",fork,reuseaddr", "tcp:10.0.2.2:" + (port + 1)).inheritIO().start();
         }
+
+        while (!Arrays.asList(registry.list()).contains("bytecodeLookup")) {
+            Thread.sleep(10);
+        }
+        SlaveClassloader.lookup = (BytecodeLookup) registry.lookup("bytecodeLookup");
         System.out.println("Slave Started.");
     }
 
@@ -123,12 +124,7 @@ public class SlaveMain extends UnicastRemoteObject implements ISlaveMain {
         return r;
     }
 
-    public static void main(String[] args) throws IOException, InterruptedException {
-        if (args[args.length - 1].equals("true")) {
-            new SlaveMain(Integer.parseInt(args[args.length - 3]), UUID.fromString(args[args.length - 2]), true);
-        } else {
-            new SlaveMain(Integer.parseInt(args[args.length - 2]), UUID.fromString(args[args.length - 1]), false);
-        }
-
+    public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException, NotBoundException, NoSuchFieldException, IllegalAccessException {
+        new SlaveMain(Integer.parseInt(args[args.length - 2]), UUID.fromString(args[args.length - 1]));
     }
 }

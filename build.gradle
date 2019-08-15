@@ -36,7 +36,8 @@ shadowJar {
                 'Can-Retransform-Classes': 'true',
                 'Can-Set-Native-Method-Prefix': 'true',
                 'Implementation-Title': "BytecodeServerAgent",
-                'Implementation-Version': rootProject.version
+                'Implementation-Version': rootProject.version,
+                'Add-Opens':'java.rmi/sun.rmi.registry'
         )
     }
 }

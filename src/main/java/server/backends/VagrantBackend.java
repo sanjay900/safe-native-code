@@ -3,14 +3,12 @@ package server.backends;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.rmi.NotBoundException;
 
 public class VagrantBackend extends ProcessBackend {
-    public VagrantBackend(int rmiPort) throws IOException, NotBoundException, InterruptedException {
+    public VagrantBackend(int rmiPort) throws IOException, InterruptedException {
         super(rmiPort);
         startProcess();
     }
@@ -32,18 +30,13 @@ public class VagrantBackend extends ProcessBackend {
         }));
         String vagrantConfig = String.join("\n", IOUtils.readLines(VagrantBackend.class.getResourceAsStream("/Vagrantfile"), "utf-8"));
         vagrantConfig = vagrantConfig.replaceAll("<port>", rmiPort + "");
+        vagrantConfig = vagrantConfig.replaceAll("<port2>", rmiPort + 2 + "");
         vagrantConfig = vagrantConfig.replaceAll("<source>", getJar().getAbsolutePath());
-        vagrantConfig = vagrantConfig.replaceAll("<javaCommand>", String.join(" ", getJavaCommandArgs("java", false, true)));
+        vagrantConfig = vagrantConfig.replaceAll("<javaCommand>", String.join(" ", getJavaCommandArgs("java", false)));
         Files.write(temp.resolve("Vagrantfile"), vagrantConfig.getBytes());
         new ProcessBuilder("vagrant", "up").directory(temp.toFile()).inheritIO().start();
         System.out.println("Starting up Vagrant VM...");
         initialise();
         System.out.println("Vagrant VM started and connected.");
-    }
-
-    public static void main(String[] args) throws NotBoundException, InterruptedException, IOException {
-        new VagrantBackend(1234, Thread.currentThread().getContextClassLoader()).call(()->{
-            return "test";
-        });
     }
 }

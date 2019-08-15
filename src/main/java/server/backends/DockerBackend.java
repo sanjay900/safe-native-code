@@ -40,7 +40,7 @@ public class DockerBackend extends ProcessBackend {
         CreateContainerResponse container = dockerClient.createContainerCmd("openjdk:12")
                 .withBinds(new Bind(getJar().toPath().toAbsolutePath().getParent().toString(), new Volume("/safeNativeCode")))
                 .withWorkingDir("/safeNativeCode")
-                .withCmd(getJavaCommandArgs("java", false, false))
+                .withCmd(getJavaCommandArgs("java", false))
                 .withNetworkMode("host")
                 .exec();
         dockerClient.startContainerCmd(container.getId()).exec();

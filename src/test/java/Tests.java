@@ -26,7 +26,7 @@ public class Tests {
     private static RemoteBackend second;
 
     @BeforeClass
-    public static void init() throws NotBoundException, InterruptedException, IOException {
+    public static void init() throws InterruptedException, IOException {
         first = new RemoteBackend(1234, JavaCompiler.getClassLoader());
         second = new RemoteBackend(5678, JavaCompiler.getClassLoader());
     }

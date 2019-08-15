@@ -9,7 +9,6 @@ import slave.SerializableSupplier;
 import slave.SlaveMain;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -35,24 +34,27 @@ abstract class ProcessBackend implements Backend {
         initPorts(rmiPort);
         this.classLoaders = classLoaders;
     }
+
     private void initPorts(int rmiPort) {
         this.rmiPort = rmiPort;
         for (int i = 0; i < 10; i++) {
-            if (portsInUse.contains(rmiPort+i)) {
-                throw new RuntimeException("Error, port "+rmiPort+" is in use by another backend.");
+            if (portsInUse.contains(rmiPort + i)) {
+                throw new RuntimeException("Error, port " + rmiPort + " is in use by another backend.");
             }
-            portsInUse.add(rmiPort+i);
+            portsInUse.add(rmiPort + i);
         }
     }
 
-    String[] getJavaCommandArgs(String javaCommand, boolean jarWithPath, boolean maskPort) {
+    String[] getJavaCommandArgs(String javaCommand, boolean jarWithPath) {
         List<String> args = new ArrayList<>();
         args.add(javaCommand);
         args.add("-Djava.system.class.loader=slave.SlaveClassloader");
-        args.addAll(Arrays.asList("-cp", jarWithPath ? getJar().getAbsolutePath() : getJar().getName(), SlaveMain.class.getName(), rmiPort + "", uuid.toString()));
-        if (maskPort) {
-            args.add("true");
+        //Give us the ability to reflect into rmi so we can use it on VMs and docker
+        //On Java 9+, we need to explicitly grant ourselves access to the rmi module
+        if (Integer.parseInt(System.getProperty("java.version").split("\\.")[0]) >= 9) {
+            args.addAll(Arrays.asList("--add-opens", "java.rmi/sun.rmi.registry=ALL-UNNAMED"));
         }
+        args.addAll(Arrays.asList("-cp", jarWithPath ? getJar().getAbsolutePath() : getJar().getName(), SlaveMain.class.getName(), rmiPort + "", uuid.toString()));
         return args.toArray(new String[0]);
     }
 
@@ -79,9 +81,8 @@ abstract class ProcessBackend implements Backend {
             }
         }
         if (classLoaders != null) {
-            registry.rebind("bytecodeLookup", new BytecodeServer(rmiPort+2, classLoaders));
+            registry.rebind("bytecodeLookup", new BytecodeServer(rmiPort+1, classLoaders));
         }
-        System.out.println(remoteSlave);
     }
 
     @Override

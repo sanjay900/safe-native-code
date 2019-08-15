@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public interface Backend {
-    static List<Integer> portsInUse = new ArrayList<>();
+    List<Integer> portsInUse = new ArrayList<>();
     interface One<R, T1> extends Serializable {
         R accept(T1 args);
     }

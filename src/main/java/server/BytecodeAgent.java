@@ -15,7 +15,7 @@ public class BytecodeAgent implements ClassFileTransformer {
     static HashMap<String, byte[]> classFiles = new HashMap<>();
     public static void agentmain(String args, Instrumentation instrumentation) throws RemoteException {
         int port = Integer.parseInt(args);
-        BytecodeServer server = new BytecodeServer(port+2, ClassLoader.getSystemClassLoader());
+        BytecodeServer server = new BytecodeServer(port+1, ClassLoader.getSystemClassLoader());
         //Add a transformer that simply stores all classes encountered to classFiles
         instrumentation.addTransformer(new BytecodeAgent());
         Registry registry = LocateRegistry.createRegistry(port);
