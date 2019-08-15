@@ -7,8 +7,10 @@ import server.backends.*;
 import slave.IncorrectSlaveException;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
+import java.rmi.UnmarshalException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -170,6 +172,25 @@ public class Tests {
             try {
                 return s.getClass().getDeclaredMethod("getData").invoke(s);
             } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }).get());
+    }
+
+    @Test(expected = UnmarshalException.class)
+    @SuppressWarnings("deprecation")
+    public void TestSerialisation() throws Exception {
+
+        Class<?> clazz = JavaCompiler.compile(
+                "public class Test implements java.io.Serializable {" +
+                        "public String getData() {return \"test\";}" +
+                        "}", "Test");
+        Assert.assertEquals("test", first.call(() -> {
+            try {
+                assert clazz != null;
+                return clazz.newInstance();
+            } catch (InstantiationException | IllegalAccessException e) {
                 e.printStackTrace();
             }
             return null;
