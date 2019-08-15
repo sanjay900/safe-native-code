@@ -3,6 +3,7 @@ package slave;
 import server.BytecodeLookup;
 import server.RemoteObject;
 
+import java.io.IOException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -15,16 +16,23 @@ import java.util.UUID;
 /**
  * SlaveMain is the Main class run by a slave
  */
-public class SlaveMain implements ISlaveMain {
+public class SlaveMain extends UnicastRemoteObject implements ISlaveMain {
 
     private transient Map<SlaveRemoteObject, Object> localObjects = new HashMap<>();
 
-    private SlaveMain(int port, UUID uuid) throws RemoteException, InterruptedException {
-        Registry registry = LocateRegistry.createRegistry(port);
-        ISlaveMain stub = (ISlaveMain) UnicastRemoteObject.exportObject(this, 0);
-        registry.rebind(uuid.toString(), stub);
+    private SlaveMain(int port, UUID uuid, boolean forwardPort) throws IOException, InterruptedException {
+        super(port+3);
+        Registry registry;
+        if (forwardPort) {
+            registry = LocateRegistry.createRegistry(port + 1);
+            //Can we replace socat with something written in java?
+            new ProcessBuilder("socat", "tcp-l:" + port + ",fork,reuseaddr", "tcp:127.0.0.1:" + (port + 1)).inheritIO().start();
+            new ProcessBuilder("socat", "tcp-l:" + (port+3) + ",fork,reuseaddr", "tcp:127.0.0.1:" + (port + 6)).inheritIO().start();
+        } else {
+            registry = LocateRegistry.createRegistry(port);
+        }
+        registry.rebind(uuid.toString(), this);
 
-        //Wait for the main process has given us a classloader.
         while (true) {
             try {
                 SlaveClassloader.lookup = (BytecodeLookup) registry.lookup("bytecodeLookup");
@@ -33,7 +41,7 @@ public class SlaveMain implements ISlaveMain {
                 Thread.sleep(10);
             }
         }
-        System.out.println("Bound!");
+        System.out.println("Slave Started.");
     }
 
     @Override
@@ -115,7 +123,12 @@ public class SlaveMain implements ISlaveMain {
         return r;
     }
 
-    public static void main(String[] args) throws RemoteException, InterruptedException {
-        new SlaveMain(Integer.parseInt(args[args.length - 2]), UUID.fromString(args[args.length - 1]));
+    public static void main(String[] args) throws IOException, InterruptedException {
+        if (args[args.length - 1].equals("true")) {
+            new SlaveMain(Integer.parseInt(args[args.length - 3]), UUID.fromString(args[args.length - 2]), true);
+        } else {
+            new SlaveMain(Integer.parseInt(args[args.length - 2]), UUID.fromString(args[args.length - 1]), false);
+        }
+
     }
 }

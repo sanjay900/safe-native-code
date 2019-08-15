@@ -14,7 +14,8 @@ import java.rmi.server.UnicastRemoteObject;
 public class BytecodeServer extends UnicastRemoteObject implements BytecodeLookup {
     private transient ClassLoader[] classLoaders;
 
-    public BytecodeServer(ClassLoader... classLoaders) throws RemoteException {
+    public BytecodeServer(int unicastPort, ClassLoader... classLoaders) throws RemoteException {
+        super(unicastPort);
         this.classLoaders = classLoaders;
     }
 

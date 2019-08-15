@@ -3,10 +3,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import server.RemoteObject;
-import server.backends.Backend;
-import server.backends.DirectBackend;
-import server.backends.DockerBackend;
-import server.backends.RemoteBackend;
+import server.backends.*;
 import slave.IncorrectSlaveException;
 
 import java.io.IOException;
@@ -24,8 +21,10 @@ public class Tests {
             return a + b;
         }
     }
+
     private static RemoteBackend first;
     private static RemoteBackend second;
+
     @BeforeClass
     public static void init() throws NotBoundException, InterruptedException, IOException {
         first = new RemoteBackend(1234, JavaCompiler.getClassLoader());
@@ -116,10 +115,15 @@ public class Tests {
     public void time() throws IOException, NotBoundException, InterruptedException {
         long expected = 49999995000000L;
         Map<Backend, Long> timings = new HashMap<>();
-        Backend[] backends = new Backend[]{new DirectBackend(), first, new DockerBackend(1111, JavaCompiler.getClassLoader())};
+        Backend[] backends = new Backend[]{
+                new DirectBackend(),
+                first,
+                new DockerBackend(1111, JavaCompiler.getClassLoader()),
+                new VagrantBackend(1100, JavaCompiler.getClassLoader())
+        };
         int testCount = 20;
         for (Backend backend : backends) {
-            for (int i = 0; i < testCount+5; i++) {
+            for (int i = 0; i < testCount + 5; i++) {
                 Instant start = Instant.now();
                 RemoteObject<TimingTest> test = backend.call(TimingTest::new);
                 test.run(TimingTest::addAll);
@@ -132,7 +136,7 @@ public class Tests {
             }
         }
         for (Backend backend : backends) {
-            System.out.println("Time taken for "+backend.getClass().getName()+" :"+timings.get(backend) / testCount);
+            System.out.println("Time taken for " + backend.getClass().getName() + " :" + timings.get(backend) / testCount);
         }
     }
 

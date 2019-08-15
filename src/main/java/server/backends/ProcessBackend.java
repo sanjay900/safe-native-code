@@ -9,6 +9,7 @@ import slave.SerializableSupplier;
 import slave.SlaveMain;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -27,19 +28,31 @@ abstract class ProcessBackend implements Backend {
     private ClassLoader[] classLoaders;
 
     public ProcessBackend(int rmiPort) {
-        this.rmiPort = rmiPort;
+        initPorts(rmiPort);
     }
 
     public ProcessBackend(int rmiPort, ClassLoader... classLoaders) {
-        this.rmiPort = rmiPort;
+        initPorts(rmiPort);
         this.classLoaders = classLoaders;
     }
+    private void initPorts(int rmiPort) {
+        this.rmiPort = rmiPort;
+        for (int i = 0; i < 10; i++) {
+            if (portsInUse.contains(rmiPort+i)) {
+                throw new RuntimeException("Error, port "+rmiPort+" is in use by another backend.");
+            }
+            portsInUse.add(rmiPort+i);
+        }
+    }
 
-    String[] getJavaCommandArgs(String javaCommand, boolean jarWithPath) {
+    String[] getJavaCommandArgs(String javaCommand, boolean jarWithPath, boolean maskPort) {
         List<String> args = new ArrayList<>();
         args.add(javaCommand);
         args.add("-Djava.system.class.loader=slave.SlaveClassloader");
         args.addAll(Arrays.asList("-cp", jarWithPath ? getJar().getAbsolutePath() : getJar().getName(), SlaveMain.class.getName(), rmiPort + "", uuid.toString()));
+        if (maskPort) {
+            args.add("true");
+        }
         return args.toArray(new String[0]);
     }
 
@@ -55,20 +68,20 @@ abstract class ProcessBackend implements Backend {
         return new File("build/libs/safeNativeCode.jar");
     }
 
-    void initialise() throws RemoteException, InterruptedException, NotBoundException {
+    void initialise() throws RemoteException, InterruptedException {
         while (true) {
             try {
                 registry = LocateRegistry.getRegistry(rmiPort);
-                registry.lookup(uuid.toString());
+                remoteSlave = (ISlaveMain) registry.lookup(uuid.toString());
                 break;
             } catch (NotBoundException | RemoteException e) {
                 Thread.sleep(10);
             }
         }
         if (classLoaders != null) {
-            registry.rebind("bytecodeLookup", new BytecodeServer(classLoaders));
+            registry.rebind("bytecodeLookup", new BytecodeServer(rmiPort+2, classLoaders));
         }
-        remoteSlave = (ISlaveMain) registry.lookup(uuid.toString());
+        System.out.println(remoteSlave);
     }
 
     @Override

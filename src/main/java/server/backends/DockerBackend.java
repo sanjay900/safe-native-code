@@ -24,7 +24,7 @@ public class DockerBackend extends ProcessBackend {
         super(rmiPort, classLoaders);
         startProcess();
     }
-
+    @SuppressWarnings("deprecation")
     private void startProcess() throws InterruptedException, IOException, NotBoundException {
         DockerClientConfig config = DefaultDockerClientConfig.
                 createDefaultConfigBuilder()
@@ -40,14 +40,14 @@ public class DockerBackend extends ProcessBackend {
         CreateContainerResponse container = dockerClient.createContainerCmd("openjdk:12")
                 .withBinds(new Bind(getJar().toPath().toAbsolutePath().getParent().toString(), new Volume("/safeNativeCode")))
                 .withWorkingDir("/safeNativeCode")
-                .withCmd(getJavaCommandArgs("java", false))
+                .withCmd(getJavaCommandArgs("java", false, false))
                 .withNetworkMode("host")
                 .exec();
         dockerClient.startContainerCmd(container.getId()).exec();
-        initialise();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             dockerClient.stopContainerCmd(container.getId()).exec();
             dockerClient.removeContainerCmd(container.getId()).exec();
         }));
+        initialise();
     }
 }

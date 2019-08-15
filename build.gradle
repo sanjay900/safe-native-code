@@ -40,4 +40,4 @@ shadowJar {
         )
     }
 }
-tasks.build.dependsOn tasks.shadowJar
+tasks.test.dependsOn tasks.shadowJar
