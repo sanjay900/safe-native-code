@@ -22,7 +22,8 @@ dependencies {
     compile group: 'uk.com.robust-it', name: 'cloning', version: '1.9.12'
     compile group: 'com.github.docker-java', name: 'docker-java', version: '3.1.5'
     compile group: 'javax.activation', name: 'activation', version: '1.1.1'
-
+    compile 'org.slf4j:slf4j-nop:1.7.25'
+    compile group: 'net.java.dev.jna', name: 'jna', version: '5.4.0'
 }
 
 shadowJar {

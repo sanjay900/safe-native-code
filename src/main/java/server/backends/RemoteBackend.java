@@ -17,7 +17,7 @@ public class RemoteBackend extends ProcessBackend {
 
     private void startProcess() throws InterruptedException, IOException {
         Path javaProcess = Paths.get(System.getProperty("java.home"), "bin", "java");
-        Process process = new ProcessBuilder(getJavaCommandArgs(javaProcess.toString(), true)).inheritIO().start();
+        Process process = new ProcessBuilder(getJavaCommandArgs(javaProcess.toString(), true)).start();
         //End the remoteSlave process if the parent process ends.
         Runtime.getRuntime().addShutdownHook(new Thread(process::destroy));
         initialise();

@@ -9,7 +9,6 @@ import slave.IncorrectSlaveException;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
-import java.rmi.NotBoundException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
@@ -79,10 +78,6 @@ public class Tests {
         void setBase(int base) {
             this.base = base;
         }
-
-        int getBase() {
-            return base;
-        }
     }
 
 
@@ -112,7 +107,7 @@ public class Tests {
     }
 
     @Test
-    public void time() throws IOException, NotBoundException, InterruptedException {
+    public void time() throws IOException, InterruptedException {
         long expected = 49999995000000L;
         Map<Backend, Long> timings = new HashMap<>();
         Backend[] backends = new Backend[]{
@@ -141,6 +136,7 @@ public class Tests {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void TestDynamicCompilation() throws Exception {
         Class<?> clazz = JavaCompiler.compile(
                 "public class Test {" +
@@ -148,6 +144,7 @@ public class Tests {
                         "}", "Test");
         Assert.assertEquals("test", first.call(() -> {
             try {
+                assert clazz != null;
                 return clazz.newInstance();
             } catch (InstantiationException | IllegalAccessException e) {
                 e.printStackTrace();

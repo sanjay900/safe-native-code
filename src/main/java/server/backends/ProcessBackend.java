@@ -1,7 +1,9 @@
 package server.backends;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.SystemUtils;
 import server.BytecodeServer;
+import server.CLibrary;
 import server.RemoteObject;
 import slave.ISlaveMain;
 import slave.SerializableConsumer;
@@ -19,18 +21,19 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+import static server.CLibrary.PR_SET_DUMPABLE;
+
 abstract class ProcessBackend implements Backend {
     private ISlaveMain remoteSlave;
-    protected int rmiPort = -1;
-    private Registry registry;
+    int rmiPort = -1;
     private UUID uuid = UUID.randomUUID();
     private ClassLoader[] classLoaders;
 
-    public ProcessBackend(int rmiPort) {
+    ProcessBackend(int rmiPort) {
         initPorts(rmiPort);
     }
 
-    public ProcessBackend(int rmiPort, ClassLoader... classLoaders) {
+    ProcessBackend(int rmiPort, ClassLoader... classLoaders) {
         initPorts(rmiPort);
         this.classLoaders = classLoaders;
     }
@@ -42,6 +45,9 @@ abstract class ProcessBackend implements Backend {
                 throw new RuntimeException("Error, port " + rmiPort + " is in use by another backend.");
             }
             portsInUse.add(rmiPort + i);
+        }
+        if (SystemUtils.IS_OS_UNIX) {
+            CLibrary.prctl(PR_SET_DUMPABLE, 0);
         }
     }
 
@@ -58,7 +64,7 @@ abstract class ProcessBackend implements Backend {
         return args.toArray(new String[0]);
     }
 
-    public static File getJar() {
+    static File getJar() {
         try {
             File jar = new File(ProcessBackend.class.getProtectionDomain().getCodeSource().getLocation().toURI());
             if (FilenameUtils.getExtension(jar.getPath()).equals("jar")) {
@@ -71,6 +77,7 @@ abstract class ProcessBackend implements Backend {
     }
 
     void initialise() throws RemoteException, InterruptedException {
+        Registry registry;
         while (true) {
             try {
                 registry = LocateRegistry.getRegistry(rmiPort);
@@ -81,7 +88,7 @@ abstract class ProcessBackend implements Backend {
             }
         }
         if (classLoaders != null) {
-            registry.rebind("bytecodeLookup", new BytecodeServer(rmiPort+1, classLoaders));
+            registry.rebind("bytecodeLookup", new BytecodeServer(rmiPort + 1, classLoaders));
         }
     }
 

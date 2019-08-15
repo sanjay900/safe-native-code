@@ -15,17 +15,17 @@ import java.io.IOException;
 import java.rmi.NotBoundException;
 
 public class DockerBackend extends ProcessBackend {
-    public DockerBackend(int rmiPort) throws IOException, NotBoundException, InterruptedException {
+    public DockerBackend(int rmiPort) throws IOException, InterruptedException {
         super(rmiPort);
         startProcess();
     }
 
-    public DockerBackend(int rmiPort, ClassLoader... classLoaders) throws IOException, NotBoundException, InterruptedException {
+    public DockerBackend(int rmiPort, ClassLoader... classLoaders) throws IOException, InterruptedException {
         super(rmiPort, classLoaders);
         startProcess();
     }
     @SuppressWarnings("deprecation")
-    private void startProcess() throws InterruptedException, IOException, NotBoundException {
+    private void startProcess() throws InterruptedException, IOException {
         DockerClientConfig config = DefaultDockerClientConfig.
                 createDefaultConfigBuilder()
                 .build();
