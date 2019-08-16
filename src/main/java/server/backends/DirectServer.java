@@ -1,11 +1,11 @@
 package server.backends;
 
 import com.rits.cloning.Cloner;
+import server.LocalSlaveObject;
 import shared.RemoteObject;
 import shared.SerializableConsumer;
-import shared.SerializableSupplier;
 import shared.SerializableRunnable;
-import server.LocalSlaveObject;
+import shared.SerializableSupplier;
 
 import java.rmi.RemoteException;
 
@@ -16,6 +16,16 @@ import java.rmi.RemoteException;
 public class DirectServer implements Server {
 
     @Override
+    public void exit() {
+        System.exit(0);
+    }
+
+    @Override
+    public void waitForExit() {
+        //One would hope the direct server never actually exits..... So we just do nothing.
+    }
+
+    @Override
     public <T> RemoteObject<T> copy(RemoteObject<T> original) throws RemoteException {
         return new LocalSlaveObject<>(Cloner.shared().deepClone(original.get()));
     }
@@ -23,11 +33,6 @@ public class DirectServer implements Server {
     @Override
     public void call(SerializableRunnable lambda) throws RemoteException {
         lambda.run();
-    }
-
-    @Override
-    public void exit() {
-        System.exit(0);
     }
 
     @Override

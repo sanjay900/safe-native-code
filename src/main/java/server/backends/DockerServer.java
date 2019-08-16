@@ -26,6 +26,7 @@ public class DockerServer extends ProcessBasedServer {
     @SuppressWarnings("deprecation")
     public DockerServer(boolean useAgent, ClassLoader... classLoaders) throws IOException, InterruptedException {
         super(useAgent, classLoaders);
+        //Start a docker container based on our openjdk 12 image.
         DockerClientConfig config = DefaultDockerClientConfig.
                 createDefaultConfigBuilder()
                 .build();
@@ -36,6 +37,7 @@ public class DockerServer extends ProcessBasedServer {
         ExposedPort exposedRMI = ExposedPort.tcp(lookupPort);
         Ports portBindings = new Ports();
         portBindings.bind(exposedRMI, Ports.Binding.bindPort(lookupPort));
+        //Share the folder containing the jar with the container.
         container = dockerClient.createContainerCmd("openjdk:12")
                 .withBinds(new Bind(getJar().toPath().toAbsolutePath().getParent().toString(), new Volume("/safeNativeCode")))
                 .withWorkingDir("/safeNativeCode")

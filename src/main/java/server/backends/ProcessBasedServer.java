@@ -37,6 +37,7 @@ abstract class ProcessBasedServer implements Server {
     int slavePort;
     int lookupPort;
     private ClassLoader[] classLoaders;
+    private boolean useAgent;
 
     /**
      * Create a slave that runs in another process somewhere
@@ -46,10 +47,11 @@ abstract class ProcessBasedServer implements Server {
      * @throws IOException
      */
     ProcessBasedServer(boolean useAgent, ClassLoader... classLoaders) throws IOException {
-        this.classLoaders = useAgent ? null : classLoaders;
+        this.classLoaders = classLoaders;
         this.registryPort = findAvailablePort();
         this.slavePort = findAvailablePort();
         this.lookupPort = findAvailablePort();
+        this.useAgent = useAgent;
         if (SystemUtils.IS_OS_UNIX) {
             CLibrary.prctl(PR_SET_DUMPABLE, 0);
         }
@@ -102,22 +104,22 @@ abstract class ProcessBasedServer implements Server {
                 Thread.sleep(10);
             }
         }
-        if (classLoaders == null) {
+        if (useAgent) {
             ByteBuddyAgent.attach(getJar(), ByteBuddyAgent.ProcessProvider.ForCurrentVm.INSTANCE, registryPort + " " + lookupPort);
-        } else {
-            BytecodeRetriever br = new BytecodeRetriever(lookupPort, classLoaders);
-            registry.rebind("bytecodeLookup", br);
-            //Start a thread that monitors the remote process, and frees up the retrievers ports when it is completed.
-            new Thread(()->{
-                try {
-                    this.waitForExit();
-                    UnicastRemoteObject.unexportObject(br, true);
-                } catch (InterruptedException | IOException ignored) {
-
-                }
-            }).start();
+            return;
         }
-        Thread.sleep(1000);
+        BytecodeRetriever br = new BytecodeRetriever(lookupPort, classLoaders);
+        registry.rebind("bytecodeLookup", br);
+        //Start a thread that monitors the remote process, and frees up the retrievers ports when it is completed.
+        new Thread(() -> {
+            try {
+                this.waitForExit();
+                UnicastRemoteObject.unexportObject(br, true);
+            } catch (InterruptedException | IOException ignored) {
+
+            }
+        }).start();
+
     }
 
     @Override
