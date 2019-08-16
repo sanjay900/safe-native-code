@@ -4,12 +4,11 @@ import com.rits.cloning.Cloner;
 import shared.RemoteObject;
 import shared.SerializableConsumer;
 import shared.SerializableSupplier;
-import shared.SerializeableRunnable;
+import shared.SerializableRunnable;
 
 import java.rmi.RemoteException;
 
 public class DirectBackend implements Backend {
-
     public class LocalRemoteObject<T> implements RemoteObject<T> {
         T obj;
 
@@ -44,8 +43,18 @@ public class DirectBackend implements Backend {
     }
 
     @Override
-    public void call(SerializeableRunnable lambda) throws RemoteException {
+    public void call(SerializableRunnable lambda) throws RemoteException {
         lambda.run();
+    }
+
+    @Override
+    public void exit(int code) {
+        System.exit(0);
+    }
+
+    @Override
+    public boolean isAlive() {
+        return true;
     }
 
     @Override

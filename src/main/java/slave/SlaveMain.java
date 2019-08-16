@@ -1,13 +1,7 @@
 package slave;
 
-import shared.BytecodeLookup;
-import shared.RemoteObject;
-import shared.IncorrectSlaveException;
-import shared.SerializableConsumer;
-import shared.SerializableSupplier;
-import shared.SerializeableRunnable;
+import shared.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
@@ -21,36 +15,35 @@ import java.util.*;
 /**
  * SlaveMain is the Main class run by a slave
  */
-public class SlaveMain extends UnicastRemoteObject implements ISlaveMain {
+public class SlaveMain extends UnicastRemoteObject implements Slave {
 
     private transient Map<SlaveRemoteObject, Object> localObjects = new HashMap<>();
 
     @SuppressWarnings("unchecked")
-    private SlaveMain(int port, UUID uuid) throws IOException, InterruptedException, ClassNotFoundException, IllegalAccessException, NoSuchFieldException, NotBoundException {
-        super(port + 2);
+    private SlaveMain(UUID uuid, int registryPort, int slavePort, int lookupPort, boolean isVagrant) throws IOException, InterruptedException, ClassNotFoundException, IllegalAccessException, NoSuchFieldException, NotBoundException {
+        super(slavePort);
 
 
-        Registry registry = LocateRegistry.createRegistry(port);
+        Registry registry = LocateRegistry.createRegistry(registryPort);
         registry.rebind(uuid.toString(), this);
-        if (new File(".").getAbsolutePath().contains("vagrant")) {
+        if (isVagrant) {
             //For vagrant, requests don't come from localhost, and instead come from 10.0.2.2.
             //For vagrant, we have to proxy back the requests for bytecodeLookup back to the host, as the host isn't localhost.
             Field f = Class.forName("sun.rmi.registry.RegistryImpl").getDeclaredField("allowedAccessCache");
             f.setAccessible(true);
             InetAddress host = InetAddress.getByName("10.0.2.2");
-            ((Hashtable)f.get(null)).put(host, host);
-            new ProcessBuilder("socat", "tcp-l:" + (port + 1) + ",fork,reuseaddr", "tcp:10.0.2.2:" + (port + 1)).inheritIO().start();
+            ((Hashtable) f.get(null)).put(host, host);
+            new ProcessBuilder("socat", "tcp-l:" + lookupPort + ",fork,reuseaddr", "tcp:10.0.2.2:" + lookupPort).inheritIO().start();
         }
 
         while (!Arrays.asList(registry.list()).contains("bytecodeLookup")) {
             Thread.sleep(10);
         }
-        SlaveClassloader.lookup = (BytecodeLookup) registry.lookup("bytecodeLookup");
-        System.out.println("Slave Started.");
+        SlaveClassloader.setLookup((BytecodeLookup) registry.lookup("bytecodeLookup"));
     }
 
     @Override
-    public void call(SerializeableRunnable lambda) throws RemoteException {
+    public void call(SerializableRunnable lambda) throws RemoteException {
         lambda.run();
     }
 
@@ -134,6 +127,6 @@ public class SlaveMain extends UnicastRemoteObject implements ISlaveMain {
     }
 
     public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException, NotBoundException, NoSuchFieldException, IllegalAccessException {
-        new SlaveMain(Integer.parseInt(args[args.length - 2]), UUID.fromString(args[args.length - 1]));
+        new SlaveMain(UUID.fromString(args[args.length - 5]), Integer.parseInt(args[args.length - 4]), Integer.parseInt(args[args.length - 3]), Integer.parseInt(args[args.length - 2]), args[args.length - 1].equals("true"));
     }
 }

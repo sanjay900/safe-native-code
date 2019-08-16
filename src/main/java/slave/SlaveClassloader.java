@@ -5,8 +5,11 @@ import shared.BytecodeLookup;
 import java.rmi.RemoteException;
 import java.security.SecureClassLoader;
 
+/**
+ * SlaveClassloader facilitates loading classes from the main process, using RMI. We retrieve a BytecodeLookup from the host, and use it to load classes.
+ */
 public class SlaveClassloader extends SecureClassLoader {
-    static BytecodeLookup lookup;
+    private static BytecodeLookup lookup;
 
     public SlaveClassloader(ClassLoader parent) {
         super(parent);
@@ -23,5 +26,9 @@ public class SlaveClassloader extends SecureClassLoader {
         }
         if (b == null) return super.findClass(name);
         return super.defineClass(name, b, 0, b.length);
+    }
+
+    public static void setLookup(BytecodeLookup lookup) {
+        SlaveClassloader.lookup = lookup;
     }
 }

@@ -13,9 +13,9 @@ import java.util.UUID;
  */
 public class SlaveRemoteObject<T> implements RemoteObject<T> {
     private UUID uuid;
-    private ISlaveMain slave;
+    private Slave slave;
 
-    SlaveRemoteObject(ISlaveMain remote) {
+    SlaveRemoteObject(Slave remote) {
         this.uuid = UUID.randomUUID();
         this.slave = remote;
     }

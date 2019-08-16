@@ -1,17 +1,21 @@
 package server.backends;
 
+import net.bytebuddy.agent.ByteBuddyAgent;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.SystemUtils;
 import server.BytecodeHoster;
 import server.CLibrary;
 import shared.RemoteObject;
-import shared.SerializeableRunnable;
-import slave.ISlaveMain;
 import shared.SerializableConsumer;
+import shared.SerializableRunnable;
 import shared.SerializableSupplier;
+import slave.Slave;
 import slave.SlaveMain;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.net.URISyntaxException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -25,34 +29,39 @@ import java.util.UUID;
 import static server.CLibrary.PR_SET_DUMPABLE;
 
 abstract class ProcessBackend implements Backend {
-    private ISlaveMain remoteSlave;
-    int rmiPort = -1;
+    private Slave remoteSlave;
+    int registryPort;
+    int slavePort;
+    int lookupPort;
     private UUID uuid = UUID.randomUUID();
     private ClassLoader[] classLoaders;
 
-    ProcessBackend(int rmiPort) {
-        initPorts(rmiPort);
-    }
-
-    ProcessBackend(int rmiPort, ClassLoader... classLoaders) {
-        initPorts(rmiPort);
-        this.classLoaders = classLoaders;
-    }
-
-    private void initPorts(int rmiPort) {
-        this.rmiPort = rmiPort;
-        for (int i = 0; i < 10; i++) {
-            if (portsInUse.contains(rmiPort + i)) {
-                throw new RuntimeException("Error, port " + rmiPort + " is in use by another backend.");
-            }
-            portsInUse.add(rmiPort + i);
-        }
+    /**
+     * Create a slave that runs in another process somewhere
+     *
+     * @param useAgent     true to use a java agent to capture all classes, false to pass in classloaders below
+     * @param classLoaders a list of classloads to supply classes to the slave, if useAgent is false
+     * @throws IOException
+     */
+    ProcessBackend(boolean useAgent, ClassLoader... classLoaders) throws IOException {
+        this.classLoaders = useAgent ? null : classLoaders;
+        this.registryPort = findAvailablePort();
+        this.slavePort = findAvailablePort();
+        this.lookupPort = findAvailablePort();
         if (SystemUtils.IS_OS_UNIX) {
             CLibrary.prctl(PR_SET_DUMPABLE, 0);
         }
     }
 
-    String[] getJavaCommandArgs(String javaCommand, boolean jarWithPath) {
+    private int findAvailablePort() throws IOException {
+        ServerSocket ss = new ServerSocket();
+        ss.setReuseAddress(true);
+        ss.bind(new InetSocketAddress(0));
+        ss.close();
+        return ss.getLocalPort();
+    }
+
+    String[] getJavaCommandArgs(String javaCommand, boolean jarWithPath, boolean isVagrant) {
         List<String> args = new ArrayList<>();
         args.add(javaCommand);
         args.add("-Djava.system.class.loader=slave.SlaveClassloader");
@@ -61,7 +70,9 @@ abstract class ProcessBackend implements Backend {
         if (Integer.parseInt(System.getProperty("java.version").split("\\.")[0]) >= 9) {
             args.addAll(Arrays.asList("--add-opens", "java.rmi/sun.rmi.registry=ALL-UNNAMED"));
         }
-        args.addAll(Arrays.asList("-cp", jarWithPath ? getJar().getAbsolutePath() : getJar().getName(), SlaveMain.class.getName(), rmiPort + "", uuid.toString()));
+        args.addAll(Arrays.asList("-cp", jarWithPath ? getJar().getAbsolutePath() : getJar().getName(), SlaveMain.class.getName()));
+        args.addAll(Arrays.asList(uuid.toString(), registryPort + "", slavePort + "", lookupPort + ""));
+        args.add(isVagrant + "");
         return args.toArray(new String[0]);
     }
 
@@ -77,25 +88,36 @@ abstract class ProcessBackend implements Backend {
         return new File("build/libs/safeNativeCode.jar");
     }
 
-    void initialise() throws RemoteException, InterruptedException {
+    void setupRegistry() throws RemoteException, InterruptedException {
         Registry registry;
         while (true) {
             try {
-                registry = LocateRegistry.getRegistry(rmiPort);
-                remoteSlave = (ISlaveMain) registry.lookup(uuid.toString());
+                registry = LocateRegistry.getRegistry(registryPort);
+                remoteSlave = (Slave) registry.lookup(uuid.toString());
                 break;
             } catch (NotBoundException | RemoteException e) {
                 Thread.sleep(10);
             }
         }
-        if (classLoaders != null) {
-            registry.rebind("bytecodeLookup", new BytecodeHoster(rmiPort + 1, classLoaders));
+        if (classLoaders == null) {
+            ByteBuddyAgent.attach(getJar(), ByteBuddyAgent.ProcessProvider.ForCurrentVm.INSTANCE, registryPort + " " + lookupPort);
+        } else {
+            registry.rebind("bytecodeLookup", new BytecodeHoster(lookupPort, classLoaders));
         }
         Thread.sleep(1000);
     }
 
     @Override
-    public void call(SerializeableRunnable lambda) throws RemoteException {
+    public void exit(int code) {
+        try {
+            remoteSlave.call(() -> System.exit(code));
+        } catch (Exception ex) {
+            //We expect an Exception here as the rmi session is abruptly stopped. It changes however
+        }
+    }
+
+    @Override
+    public void call(SerializableRunnable lambda) throws RemoteException {
         remoteSlave.call(lambda);
     }
 

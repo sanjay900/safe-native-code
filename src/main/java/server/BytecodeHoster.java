@@ -6,6 +6,8 @@ import shared.BytecodeLookup;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
@@ -16,7 +18,12 @@ public class BytecodeHoster extends UnicastRemoteObject implements BytecodeLooku
     private transient ClassLoader[] classLoaders;
 
     public BytecodeHoster(int unicastPort, ClassLoader... classLoaders) throws RemoteException {
-        super(unicastPort);
+        super(unicastPort, null, port -> {
+            ServerSocket ss = new ServerSocket();
+            ss.setReuseAddress(true);
+            ss.bind(new InetSocketAddress(port));
+            return ss;
+        });
         this.classLoaders = classLoaders;
     }
 
@@ -25,7 +32,7 @@ public class BytecodeHoster extends UnicastRemoteObject implements BytecodeLooku
             return BytecodeAgent.classFiles.get(clazz);
         }
         for (ClassLoader loader : classLoaders) {
-            InputStream is = loader.getResourceAsStream(clazz+".class");
+            InputStream is = loader.getResourceAsStream(clazz + ".class");
             if (is != null) {
                 try {
                     return IOUtils.toByteArray(is);

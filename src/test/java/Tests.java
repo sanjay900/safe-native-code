@@ -2,9 +2,9 @@ import compiler.JavaCompiler;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import shared.RemoteObject;
 import server.backends.*;
 import shared.IncorrectSlaveException;
+import shared.RemoteObject;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -29,8 +29,8 @@ public class Tests {
 
     @BeforeClass
     public static void init() throws InterruptedException, IOException {
-        first = new RemoteBackend(1234, JavaCompiler.getClassLoader());
-        second = new RemoteBackend(5678, JavaCompiler.getClassLoader());
+        first = new RemoteBackend(false, JavaCompiler.getClassLoader());
+        second = new RemoteBackend(false, JavaCompiler.getClassLoader());
     }
 
     @Test
@@ -119,19 +119,17 @@ public class Tests {
         backendsClasses.add(DockerBackend.class);
         backendsClasses.add(VagrantBackend.class);
         List<Backend> backends = new ArrayList<>();
-        int port = 1100;
         ClassLoader[] loaders = new ClassLoader[]{JavaCompiler.getClassLoader()};
         for (Class<? extends Backend> clazz : backendsClasses) {
             System.out.println("Constructing " + clazz.getName());
             Instant start = Instant.now();
             try {
-                backends.add(clazz.getDeclaredConstructor(int.class, ClassLoader[].class).newInstance(port, loaders));
+                backends.add(clazz.getDeclaredConstructor(boolean.class, ClassLoader[].class).newInstance(false, loaders));
             } catch (NoSuchMethodException ex) {
                 backends.add(clazz.getDeclaredConstructor().newInstance());
             }
-            port += 100;
             Instant end = Instant.now();
-            System.out.println("Time taken to start " + clazz.getName() + " :" + Duration.between(start, end).toMillis());
+            System.out.println("Time taken to start " + clazz.getName() + ": " + Duration.between(start, end).toMillis());
         }
         int testCount = 20;
         for (Backend backend : backends) {
@@ -175,6 +173,26 @@ public class Tests {
             }
             return null;
         }).get());
+    }
+
+    @Test
+    public void TestStopping() throws Exception {
+        System.out.println("Constructing backends");
+        Backend[] backends = new Backend[]{
+                new RemoteBackend(false, JavaCompiler.getClassLoader()),
+                new DockerBackend(false, JavaCompiler.getClassLoader()),
+                new VagrantBackend(false, JavaCompiler.getClassLoader()),
+        };
+
+        for (Backend backend : backends) {
+            String name = backend.getClass().getName();
+            System.out.println("Stopping: " + name);
+            backend.exit(0);
+            //We have sent the stop command, but something like docker is going to take a bit to stop.
+            Thread.sleep(1000);
+            Assert.assertFalse(backend.isAlive());
+            System.out.println("Stopped: " + name);
+        }
     }
 
     @Test(expected = UnmarshalException.class)

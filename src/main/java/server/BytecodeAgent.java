@@ -17,11 +17,12 @@ public class BytecodeAgent implements ClassFileTransformer {
      */
     static HashMap<String, byte[]> classFiles = new HashMap<>();
     public static void agentmain(String args, Instrumentation instrumentation) throws RemoteException {
-        int port = Integer.parseInt(args);
-        BytecodeHoster server = new BytecodeHoster(port+1, ClassLoader.getSystemClassLoader());
+        int registryPort = Integer.parseInt(args.split(" ")[0]);
+        int lookupPort = Integer.parseInt(args.split(" ")[1]);
+        BytecodeHoster server = new BytecodeHoster(lookupPort, ClassLoader.getSystemClassLoader());
         //Add a transformer that simply stores all classes encountered to classFiles
         instrumentation.addTransformer(new BytecodeAgent());
-        Registry registry = LocateRegistry.createRegistry(port);
+        Registry registry = LocateRegistry.getRegistry(registryPort);
         registry.rebind("bytecodeLookup", server);
     }
 
