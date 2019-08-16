@@ -24,16 +24,17 @@ import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 
 import static server.CLibrary.PR_SET_DUMPABLE;
 
-abstract class ProcessBackend implements Backend {
-    private Slave remoteSlave;
+/**
+ * A ProcessBasedServer is used when we have a server that executes code in a slave process somewhere.
+ */
+abstract class ProcessBasedServer implements Server {
+    private Slave slave;
     int registryPort;
     int slavePort;
     int lookupPort;
-    private UUID uuid = UUID.randomUUID();
     private ClassLoader[] classLoaders;
 
     /**
@@ -43,7 +44,7 @@ abstract class ProcessBackend implements Backend {
      * @param classLoaders a list of classloads to supply classes to the slave, if useAgent is false
      * @throws IOException
      */
-    ProcessBackend(boolean useAgent, ClassLoader... classLoaders) throws IOException {
+    ProcessBasedServer(boolean useAgent, ClassLoader... classLoaders) throws IOException {
         this.classLoaders = useAgent ? null : classLoaders;
         this.registryPort = findAvailablePort();
         this.slavePort = findAvailablePort();
@@ -51,6 +52,7 @@ abstract class ProcessBackend implements Backend {
         if (SystemUtils.IS_OS_UNIX) {
             CLibrary.prctl(PR_SET_DUMPABLE, 0);
         }
+        Runtime.getRuntime().addShutdownHook(new Thread(this::exit));
     }
 
     private int findAvailablePort() throws IOException {
@@ -65,20 +67,20 @@ abstract class ProcessBackend implements Backend {
         List<String> args = new ArrayList<>();
         args.add(javaCommand);
         args.add("-Djava.system.class.loader=slave.SlaveClassloader");
-        //Give us the ability to reflect into rmi so we can use it on VMs and docker
+        //Give us the ability to reflect into rmi so we can use it on VMs
         //On Java 9+, we need to explicitly grant ourselves access to the rmi module
         if (Integer.parseInt(System.getProperty("java.version").split("\\.")[0]) >= 9) {
             args.addAll(Arrays.asList("--add-opens", "java.rmi/sun.rmi.registry=ALL-UNNAMED"));
         }
         args.addAll(Arrays.asList("-cp", jarWithPath ? getJar().getAbsolutePath() : getJar().getName(), SlaveMain.class.getName()));
-        args.addAll(Arrays.asList(uuid.toString(), registryPort + "", slavePort + "", lookupPort + ""));
+        args.addAll(Arrays.asList(registryPort + "", slavePort + "", lookupPort + ""));
         args.add(isVagrant + "");
         return args.toArray(new String[0]);
     }
 
     static File getJar() {
         try {
-            File jar = new File(ProcessBackend.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+            File jar = new File(ProcessBasedServer.class.getProtectionDomain().getCodeSource().getLocation().toURI());
             if (FilenameUtils.getExtension(jar.getPath()).equals("jar")) {
                 return jar;
             }
@@ -93,7 +95,7 @@ abstract class ProcessBackend implements Backend {
         while (true) {
             try {
                 registry = LocateRegistry.getRegistry(registryPort);
-                remoteSlave = (Slave) registry.lookup(uuid.toString());
+                slave = (Slave) registry.lookup("slave");
                 break;
             } catch (NotBoundException | RemoteException e) {
                 Thread.sleep(10);
@@ -108,81 +110,72 @@ abstract class ProcessBackend implements Backend {
     }
 
     @Override
-    public void exit(int code) {
-        try {
-            remoteSlave.call(() -> System.exit(code));
-        } catch (Exception ex) {
-            //We expect an Exception here as the rmi session is abruptly stopped. It changes however
-        }
-    }
-
-    @Override
     public void call(SerializableRunnable lambda) throws RemoteException {
-        remoteSlave.call(lambda);
+        slave.call(lambda);
     }
 
     @Override
     public <T> void call(RemoteObject<T> obj, SerializableConsumer<T> lambda) throws RemoteException {
-        remoteSlave.call(obj, lambda);
+        slave.call(obj, lambda);
     }
 
     @Override
     public <T> RemoteObject<T> copy(RemoteObject<T> original) throws RemoteException {
-        return remoteSlave.copy(original);
+        return slave.copy(original);
     }
 
     public <T> RemoteObject<T> call(SerializableSupplier<T> lambda) throws RemoteException {
-        return remoteSlave.call(lambda);
+        return slave.call(lambda);
     }
 
     @Override
     public <R, T> RemoteObject<R> call(RemoteObject<T> t, One<R, T> lambda) throws RemoteException {
-        return remoteSlave.call(t, lambda);
+        return slave.call(t, lambda);
     }
 
     @Override
     public <R, T1, T2> RemoteObject<R> call(RemoteObject<T1> t1, RemoteObject<T2> t2, Two<R, T1, T2> lambda) throws RemoteException {
-        return remoteSlave.call(t1, t2, lambda);
+        return slave.call(t1, t2, lambda);
     }
 
     @Override
     public <R, T1, T2, T3> RemoteObject<R> call(RemoteObject<T1> t1, RemoteObject<T2> t2, RemoteObject<T3> t3, Three<R, T1, T2, T3> lambda) throws RemoteException {
-        return remoteSlave.call(t1, t2, t3, lambda);
+        return slave.call(t1, t2, t3, lambda);
     }
 
     @Override
     public <R, T1, T2, T3, T4> RemoteObject<R> call(RemoteObject<T1> t1, RemoteObject<T2> t2, RemoteObject<T3> t3, RemoteObject<T4> t4, Four<R, T1, T2, T3, T4> lambda) throws RemoteException {
-        return remoteSlave.call(t1, t2, t3, t4, lambda);
+        return slave.call(t1, t2, t3, t4, lambda);
     }
 
     @Override
     public <R, T1, T2, T3, T4, T5> RemoteObject<R> call(RemoteObject<T1> t1, RemoteObject<T2> t2, RemoteObject<T3> t3, RemoteObject<T4> t4, RemoteObject<T5> t5, Five<R, T1, T2, T3, T4, T5> lambda) throws RemoteException {
-        return remoteSlave.call(t1, t2, t3, t4, t5, lambda);
+        return slave.call(t1, t2, t3, t4, t5, lambda);
     }
 
     @Override
     public <R, T1, T2, T3, T4, T5, T6> RemoteObject<R> call(RemoteObject<T1> t1, RemoteObject<T2> t2, RemoteObject<T3> t3, RemoteObject<T4> t4, RemoteObject<T5> t5, RemoteObject<T6> t6, Six<R, T1, T2, T3, T4, T5, T6> lambda) throws RemoteException {
-        return remoteSlave.call(t1, t2, t3, t4, t5, t6, lambda);
+        return slave.call(t1, t2, t3, t4, t5, t6, lambda);
     }
 
     @Override
     public <R, T1, T2, T3, T4, T5, T6, T7> RemoteObject<R> call(RemoteObject<T1> t1, RemoteObject<T2> t2, RemoteObject<T3> t3, RemoteObject<T4> t4, RemoteObject<T5> t5, RemoteObject<T6> t6, RemoteObject<T7> t7, Seven<R, T1, T2, T3, T4, T5, T6, T7> lambda) throws RemoteException {
-        return remoteSlave.call(t1, t2, t3, t4, t5, t6, t7, lambda);
+        return slave.call(t1, t2, t3, t4, t5, t6, t7, lambda);
     }
 
     @Override
     public <R, T1, T2, T3, T4, T5, T6, T7, T8> RemoteObject<R> call(RemoteObject<T1> t1, RemoteObject<T2> t2, RemoteObject<T3> t3, RemoteObject<T4> t4, RemoteObject<T5> t5, RemoteObject<T6> t6, RemoteObject<T7> t7, RemoteObject<T8> t8, Eight<R, T1, T2, T3, T4, T5, T6, T7, T8> lambda) throws RemoteException {
-        return remoteSlave.call(t1, t2, t3, t4, t5, t6, t7, t8, lambda);
+        return slave.call(t1, t2, t3, t4, t5, t6, t7, t8, lambda);
     }
 
     @Override
     public <R, T1, T2, T3, T4, T5, T6, T7, T8, T9> RemoteObject<R> call(RemoteObject<T1> t1, RemoteObject<T2> t2, RemoteObject<T3> t3, RemoteObject<T4> t4, RemoteObject<T5> t5, RemoteObject<T6> t6, RemoteObject<T7> t7, RemoteObject<T8> t8, RemoteObject<T9> t9, Nine<R, T1, T2, T3, T4, T5, T6, T7, T8, T9> lambda) throws RemoteException {
-        return remoteSlave.call(t1, t2, t3, t4, t5, t6, t7, t8, t9, lambda);
+        return slave.call(t1, t2, t3, t4, t5, t6, t7, t8, t9, lambda);
     }
 
     @Override
     public <R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> RemoteObject<R> call(RemoteObject<T1> t1, RemoteObject<T2> t2, RemoteObject<T3> t3, RemoteObject<T4> t4, RemoteObject<T5> t5, RemoteObject<T6> t6, RemoteObject<T7> t7, RemoteObject<T8> t8, RemoteObject<T9> t9, RemoteObject<T10> t10, Ten<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> lambda) throws RemoteException {
-        return remoteSlave.call(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, lambda);
+        return slave.call(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, lambda);
     }
 
 }

@@ -5,7 +5,9 @@ import shared.SlaveAPI;
 import java.io.IOException;
 import java.rmi.RemoteException;
 
-public interface Backend extends SlaveAPI {
-    void exit(int code) throws RemoteException;
+/**
+ * A Server is a type of service that can command a slave of some sort.
+ */
+public interface Server extends SlaveAPI {
     boolean isAlive() throws IOException, InterruptedException;
 }

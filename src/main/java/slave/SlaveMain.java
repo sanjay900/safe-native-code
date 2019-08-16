@@ -17,15 +17,15 @@ import java.util.*;
  */
 public class SlaveMain extends UnicastRemoteObject implements Slave {
 
-    private transient Map<SlaveRemoteObject, Object> localObjects = new HashMap<>();
+    private transient Map<SlaveObject, Object> localObjects = new HashMap<>();
 
     @SuppressWarnings("unchecked")
-    private SlaveMain(UUID uuid, int registryPort, int slavePort, int lookupPort, boolean isVagrant) throws IOException, InterruptedException, ClassNotFoundException, IllegalAccessException, NoSuchFieldException, NotBoundException {
+    private SlaveMain(int registryPort, int slavePort, int lookupPort, boolean isVagrant) throws IOException, InterruptedException, ClassNotFoundException, IllegalAccessException, NoSuchFieldException, NotBoundException {
         super(slavePort);
 
 
         Registry registry = LocateRegistry.createRegistry(registryPort);
-        registry.rebind(uuid.toString(), this);
+        registry.rebind("slave", this);
         if (isVagrant) {
             //For vagrant, requests don't come from localhost, and instead come from 10.0.2.2.
             //For vagrant, we have to proxy back the requests for bytecodeLookup back to the host, as the host isn't localhost.
@@ -109,10 +109,15 @@ public class SlaveMain extends UnicastRemoteObject implements Slave {
 
     @SuppressWarnings("unchecked")
     public <T> T get(RemoteObject<T> obj) throws IncorrectSlaveException {
-        if (!(obj instanceof SlaveRemoteObject) || !localObjects.containsKey(obj)) {
+        if (!(obj instanceof SlaveObject) || !localObjects.containsKey(obj)) {
             throw new IncorrectSlaveException();
         }
         return (T) localObjects.get(obj);
+    }
+
+    @Override
+    public void exit() {
+        System.exit(0);
     }
 
     @Override
@@ -121,12 +126,12 @@ public class SlaveMain extends UnicastRemoteObject implements Slave {
     }
 
     private <T> RemoteObject<T> wrap(T object) {
-        SlaveRemoteObject<T> r = new SlaveRemoteObject<>(this);
+        SlaveObject<T> r = new SlaveObject<>(this);
         localObjects.put(r, object);
         return r;
     }
 
     public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException, NotBoundException, NoSuchFieldException, IllegalAccessException {
-        new SlaveMain(UUID.fromString(args[args.length - 5]), Integer.parseInt(args[args.length - 4]), Integer.parseInt(args[args.length - 3]), Integer.parseInt(args[args.length - 2]), args[args.length - 1].equals("true"));
+        new SlaveMain(Integer.parseInt(args[args.length - 4]), Integer.parseInt(args[args.length - 3]), Integer.parseInt(args[args.length - 2]), args[args.length - 1].equals("true"));
     }
 }

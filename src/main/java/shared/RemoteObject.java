@@ -1,6 +1,6 @@
 package shared;
 
-import server.backends.Backend;
+import server.backends.Server;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;
@@ -10,7 +10,7 @@ import java.rmi.RemoteException;
  * @param <T> the type of object this is wrapping
  */
 public interface RemoteObject<T> extends Serializable {
-    <R> RemoteObject<R> call(Backend.One<R, T> lambda) throws RemoteException;
+    <R> RemoteObject<R> call(Server.One<R, T> lambda) throws RemoteException;
 
     /**
      * Execute a function on the slave, expecting no return values
@@ -27,7 +27,7 @@ public interface RemoteObject<T> extends Serializable {
      * @return the new remote object on slave
      * @throws RemoteException An error occurred while communicating with the remote JVM
      */
-    RemoteObject<T> copy(Backend slave) throws RemoteException;
+    RemoteObject<T> copy(Server slave) throws RemoteException;
 
     /**
      * Get the value this remote object represents, serializing it in the process

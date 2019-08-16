@@ -9,6 +9,7 @@ import shared.RemoteObject;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
+import java.rmi.RemoteException;
 import java.rmi.UnmarshalException;
 import java.time.Duration;
 import java.time.Instant;
@@ -24,13 +25,13 @@ public class Tests {
         }
     }
 
-    private static RemoteBackend first;
-    private static RemoteBackend second;
+    private static ProcessServer first;
+    private static ProcessServer second;
 
     @BeforeClass
     public static void init() throws InterruptedException, IOException {
-        first = new RemoteBackend(false, JavaCompiler.getClassLoader());
-        second = new RemoteBackend(false, JavaCompiler.getClassLoader());
+        first = new ProcessServer(false, JavaCompiler.getClassLoader());
+        second = new ProcessServer(false, JavaCompiler.getClassLoader());
     }
 
     @Test
@@ -66,7 +67,7 @@ public class Tests {
 
     @Test(expected = IncorrectSlaveException.class)
     public void testIncorrectRemoteBackend() throws IOException {
-        //Start two RemoteBackends, and then try to call a function on another RemoteBackend
+        //Start two RemoteBackends, and then try to call a function on another ProcessServer
         RemoteObject<LocalAdder> c = first.call(LocalAdder::new);
         second.call(c, c2 -> c2);
     }
@@ -112,41 +113,41 @@ public class Tests {
     @Test
     public void time() throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         long expected = 49999995000000L;
-        Map<Backend, Long> timings = new HashMap<>();
-        List<Class<? extends Backend>> backendsClasses = new ArrayList<>();
-        backendsClasses.add(DirectBackend.class);
-        backendsClasses.add(RemoteBackend.class);
-        backendsClasses.add(DockerBackend.class);
-        backendsClasses.add(VagrantBackend.class);
-        List<Backend> backends = new ArrayList<>();
+        Map<Server, Long> timings = new HashMap<>();
+        List<Class<? extends Server>> backendsClasses = new ArrayList<>();
+        backendsClasses.add(DirectServer.class);
+        backendsClasses.add(ProcessServer.class);
+        backendsClasses.add(DockerServer.class);
+        backendsClasses.add(VagrantServer.class);
+        List<Server> servers = new ArrayList<>();
         ClassLoader[] loaders = new ClassLoader[]{JavaCompiler.getClassLoader()};
-        for (Class<? extends Backend> clazz : backendsClasses) {
+        for (Class<? extends Server> clazz : backendsClasses) {
             System.out.println("Constructing " + clazz.getName());
             Instant start = Instant.now();
             try {
-                backends.add(clazz.getDeclaredConstructor(boolean.class, ClassLoader[].class).newInstance(false, loaders));
+                servers.add(clazz.getDeclaredConstructor(boolean.class, ClassLoader[].class).newInstance(false, loaders));
             } catch (NoSuchMethodException ex) {
-                backends.add(clazz.getDeclaredConstructor().newInstance());
+                servers.add(clazz.getDeclaredConstructor().newInstance());
             }
             Instant end = Instant.now();
             System.out.println("Time taken to start " + clazz.getName() + ": " + Duration.between(start, end).toMillis());
         }
         int testCount = 20;
-        for (Backend backend : backends) {
+        for (Server server : servers) {
             for (int i = 0; i < testCount + 5; i++) {
                 Instant start = Instant.now();
-                RemoteObject<TimingTest> test = backend.call(TimingTest::new);
+                RemoteObject<TimingTest> test = server.call(TimingTest::new);
                 test.run(TimingTest::addAll);
                 TimingTest t = test.get();
                 Instant end = Instant.now();
                 Assert.assertEquals(expected, t.local, 0);
                 if (i > 5) {
-                    timings.put(backend, timings.getOrDefault(backend, 0L) + Duration.between(start, end).toMillis());
+                    timings.put(server, timings.getOrDefault(server, 0L) + Duration.between(start, end).toMillis());
                 }
             }
         }
-        for (Backend backend : backends) {
-            System.out.println("Time taken for " + backend.getClass().getName() + " :" + timings.get(backend) / testCount);
+        for (Server server : servers) {
+            System.out.println("Time taken for " + server.getClass().getName() + " :" + timings.get(server) / testCount);
         }
     }
 
@@ -177,20 +178,61 @@ public class Tests {
 
     @Test
     public void TestStopping() throws Exception {
-        System.out.println("Constructing backends");
-        Backend[] backends = new Backend[]{
-                new RemoteBackend(false, JavaCompiler.getClassLoader()),
-                new DockerBackend(false, JavaCompiler.getClassLoader()),
-                new VagrantBackend(false, JavaCompiler.getClassLoader()),
+        System.out.println("Constructing servers");
+        Server[] servers = new Server[]{
+                new ProcessServer(false, JavaCompiler.getClassLoader()),
+                new DockerServer(false, JavaCompiler.getClassLoader()),
+                new VagrantServer(false, JavaCompiler.getClassLoader()),
         };
 
-        for (Backend backend : backends) {
-            String name = backend.getClass().getName();
+        for (Server server : servers) {
+            String name = server.getClass().getName();
             System.out.println("Stopping: " + name);
-            backend.exit(0);
-            //We have sent the stop command, but something like docker is going to take a bit to stop.
+            server.exit();
+            Assert.assertFalse(server.isAlive());
+            System.out.println("Stopped: " + name);
+        }
+    }
+
+    @Test
+    public void TestCrashing() throws Exception {
+        System.out.println("Constructing servers");
+        Server[] servers = new Server[]{
+                new ProcessServer(false, JavaCompiler.getClassLoader()),
+                new DockerServer(false, JavaCompiler.getClassLoader()),
+                new VagrantServer(false, JavaCompiler.getClassLoader()),
+        };
+
+        //Simulate a process crash with System.exit
+        for (Server server : servers) {
+            String name = server.getClass().getName();
+            System.out.println("Crashing: " + name);
+            try {
+                server.call(() -> System.exit(1));
+            } catch (RemoteException ignored) {
+              //We expect things to break here, as the RMI connection will just terminate suddenly.
+            }
+            //Vagrant and docker do take a second or so to stop
             Thread.sleep(1000);
-            Assert.assertFalse(backend.isAlive());
+            Assert.assertFalse(server.isAlive());
+            System.out.println("Stopped: " + name);
+        }
+    }
+
+    @Test
+    public void TestKilling() throws Exception {
+        System.out.println("Constructing servers");
+        Server[] servers = new Server[]{
+                new ProcessServer(false, JavaCompiler.getClassLoader()),
+                new DockerServer(false, JavaCompiler.getClassLoader()),
+                new VagrantServer(false, JavaCompiler.getClassLoader()),
+        };
+
+        for (Server server : servers) {
+            String name = server.getClass().getName();
+            System.out.println("Killing: " + name);
+            server.exit();
+            Assert.assertFalse(server.isAlive());
             System.out.println("Stopped: " + name);
         }
     }

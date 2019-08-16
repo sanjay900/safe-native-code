@@ -2,6 +2,7 @@ package server.backends;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.exception.NotModifiedException;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.ExposedPort;
@@ -14,12 +15,15 @@ import com.github.dockerjava.core.command.PullImageResultCallback;
 
 import java.io.IOException;
 
-public class DockerBackend extends ProcessBackend {
+/**
+ * A Docker Server runs a slave inside a docker container.
+ */
+public class DockerServer extends ProcessBasedServer {
     private DockerClient dockerClient;
     private CreateContainerResponse container;
 
     @SuppressWarnings("deprecation")
-    public DockerBackend(boolean useAgent, ClassLoader... classLoaders) throws IOException, InterruptedException {
+    public DockerServer(boolean useAgent, ClassLoader... classLoaders) throws IOException, InterruptedException {
         super(useAgent, classLoaders);
         DockerClientConfig config = DefaultDockerClientConfig.
                 createDefaultConfigBuilder()
@@ -29,7 +33,6 @@ public class DockerBackend extends ProcessBackend {
         dockerClient.pullImageCmd("openjdk").withTag("12").exec(cb);
         cb.awaitCompletion();
         ExposedPort exposedRMI = ExposedPort.tcp(lookupPort);
-
         Ports portBindings = new Ports();
         portBindings.bind(exposedRMI, Ports.Binding.bindPort(lookupPort));
         container = dockerClient.createContainerCmd("openjdk:12")
@@ -39,20 +42,31 @@ public class DockerBackend extends ProcessBackend {
                 .withNetworkMode("host")
                 .exec();
         dockerClient.startContainerCmd(container.getId()).exec();
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+        setupRegistry();
+    }
+
+    @Override
+    public void exit() {
+        try {
             try {
                 dockerClient.stopContainerCmd(container.getId()).exec();
             } catch (NotModifiedException ignored) {
                 //If the container is already stopped, we get this exception.
             }
             dockerClient.removeContainerCmd(container.getId()).exec();
-        }));
-        setupRegistry();
+        } catch (NotFoundException ex) {
+            //If the container has already been removed we end up here.
+        }
     }
 
     @Override
     public boolean isAlive() {
-        Boolean ret = dockerClient.inspectContainerCmd(container.getId()).exec().getState().getRunning();
-        return ret != null && ret;
+        try {
+            Boolean ret = dockerClient.inspectContainerCmd(container.getId()).exec().getState().getRunning();
+            return ret != null && ret;
+        } catch (NotFoundException ex) {
+            //If the container isn't found, it has been killed and removed.
+            return false;
+        }
     }
 }
