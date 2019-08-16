@@ -1,7 +1,6 @@
-package slave;
+package shared;
 
 import java.io.Serializable;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**

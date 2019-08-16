@@ -1,8 +1,9 @@
 package server.backends;
 
-import server.RemoteObject;
-import slave.SerializableConsumer;
-import slave.SerializableSupplier;
+import shared.RemoteObject;
+import shared.SerializableConsumer;
+import shared.SerializableSupplier;
+import shared.SerializeableRunnable;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;
@@ -52,6 +53,8 @@ public interface Backend {
     }
 
     <T> RemoteObject<T> copy(RemoteObject<T> original) throws RemoteException;
+
+    void call(SerializeableRunnable lambda) throws RemoteException;
     <R> RemoteObject<R> call(SerializableSupplier<R> lambda) throws RemoteException;
 
 

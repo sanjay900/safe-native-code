@@ -1,9 +1,10 @@
 package server.backends;
 
 import com.rits.cloning.Cloner;
-import server.RemoteObject;
-import slave.SerializableConsumer;
-import slave.SerializableSupplier;
+import shared.RemoteObject;
+import shared.SerializableConsumer;
+import shared.SerializableSupplier;
+import shared.SerializeableRunnable;
 
 import java.rmi.RemoteException;
 
@@ -40,6 +41,11 @@ public class DirectBackend implements Backend {
     @Override
     public <T> RemoteObject<T> copy(RemoteObject<T> original) throws RemoteException {
         return new LocalRemoteObject<>(Cloner.shared().deepClone(original.get()));
+    }
+
+    @Override
+    public void call(SerializeableRunnable lambda) throws RemoteException {
+        lambda.run();
     }
 
     @Override

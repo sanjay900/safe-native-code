@@ -2,6 +2,7 @@ package server;
 
 
 import org.apache.commons.io.IOUtils;
+import shared.BytecodeLookup;
 
 import java.io.IOException;
 import java.io.InputStream;

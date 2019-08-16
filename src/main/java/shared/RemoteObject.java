@@ -1,7 +1,6 @@
-package server;
+package shared;
 
 import server.backends.Backend;
-import slave.SerializableConsumer;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;

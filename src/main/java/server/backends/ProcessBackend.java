@@ -4,10 +4,11 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.SystemUtils;
 import server.BytecodeHoster;
 import server.CLibrary;
-import server.RemoteObject;
+import shared.RemoteObject;
+import shared.SerializeableRunnable;
 import slave.ISlaveMain;
-import slave.SerializableConsumer;
-import slave.SerializableSupplier;
+import shared.SerializableConsumer;
+import shared.SerializableSupplier;
 import slave.SlaveMain;
 
 import java.io.File;
@@ -90,6 +91,12 @@ abstract class ProcessBackend implements Backend {
         if (classLoaders != null) {
             registry.rebind("bytecodeLookup", new BytecodeHoster(rmiPort + 1, classLoaders));
         }
+        Thread.sleep(1000);
+    }
+
+    @Override
+    public void call(SerializeableRunnable lambda) throws RemoteException {
+        remoteSlave.call(lambda);
     }
 
     @Override

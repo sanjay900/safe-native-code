@@ -2,12 +2,11 @@ import compiler.JavaCompiler;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import server.RemoteObject;
+import shared.RemoteObject;
 import server.backends.*;
-import slave.IncorrectSlaveException;
+import shared.IncorrectSlaveException;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.rmi.UnmarshalException;

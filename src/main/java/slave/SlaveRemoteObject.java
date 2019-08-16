@@ -1,7 +1,8 @@
 package slave;
 
-import server.RemoteObject;
+import shared.RemoteObject;
 import server.backends.Backend;
+import shared.SerializableConsumer;
 
 import java.rmi.RemoteException;
 import java.util.Objects;

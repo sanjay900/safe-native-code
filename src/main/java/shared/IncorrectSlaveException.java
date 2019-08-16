@@ -1,4 +1,4 @@
-package slave;
+package shared;
 
 /**
  * This exception is thrown if a RemoteObject is passed into an incorrect slave

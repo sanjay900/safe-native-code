@@ -1,7 +1,8 @@
 package slave;
 
-import server.RemoteObject;
+import shared.RemoteObject;
 import server.backends.Backend;
+import shared.IncorrectSlaveException;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

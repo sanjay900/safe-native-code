@@ -1,7 +1,11 @@
 package slave;
 
-import server.BytecodeLookup;
-import server.RemoteObject;
+import shared.BytecodeLookup;
+import shared.RemoteObject;
+import shared.IncorrectSlaveException;
+import shared.SerializableConsumer;
+import shared.SerializableSupplier;
+import shared.SerializeableRunnable;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,6 +47,11 @@ public class SlaveMain extends UnicastRemoteObject implements ISlaveMain {
         }
         SlaveClassloader.lookup = (BytecodeLookup) registry.lookup("bytecodeLookup");
         System.out.println("Slave Started.");
+    }
+
+    @Override
+    public void call(SerializeableRunnable lambda) throws RemoteException {
+        lambda.run();
     }
 
     @Override

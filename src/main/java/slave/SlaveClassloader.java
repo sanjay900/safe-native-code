@@ -1,6 +1,6 @@
 package slave;
 
-import server.BytecodeLookup;
+import shared.BytecodeLookup;
 
 import java.rmi.RemoteException;
 import java.security.SecureClassLoader;
