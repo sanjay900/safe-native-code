@@ -28,6 +28,8 @@ public class SlaveMain extends UnicastRemoteObject implements Slave {
         registry.rebind("slave", this);
         if (isVagrant) {
             //For vagrant, requests don't come from localhost, and instead come from 10.0.2.2.
+            //RMI isn't supposed to be used this way, but we can abuse the fact that RMI stores a cache of allowed addresses in order to make things work.
+            //It's not pretty, but it does work. One would assume vagrant isn't going to be used all that much anyways.
             //For vagrant, we have to proxy back the requests for bytecodeLookup back to the host, as the host isn't localhost.
             Field f = Class.forName("sun.rmi.registry.RegistryImpl").getDeclaredField("allowedAccessCache");
             f.setAccessible(true);
