@@ -12,6 +12,7 @@ import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.command.PullImageResultCallback;
+import com.github.dockerjava.core.command.WaitContainerResultCallback;
 
 import java.io.IOException;
 
@@ -57,6 +58,13 @@ public class DockerServer extends ProcessBasedServer {
         } catch (NotFoundException ex) {
             //If the container has already been removed we end up here.
         }
+    }
+
+    @Override
+    public void waitForExit() throws InterruptedException {
+        WaitContainerResultCallback cb = new WaitContainerResultCallback();
+        dockerClient.waitContainerCmd(container.getId()).exec(cb);
+        cb.awaitCompletion();
     }
 
     @Override

@@ -42,4 +42,12 @@ public class VagrantServer extends ProcessBasedServer {
             e.printStackTrace();
         }
     }
+
+    @Override
+    public void waitForExit() throws InterruptedException, IOException {
+        //There isn't really a nice way to do this....
+        while (isAlive()) {
+            Thread.sleep(100);
+        }
+    }
 }

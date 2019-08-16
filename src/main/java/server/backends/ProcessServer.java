@@ -1,7 +1,5 @@
 package server.backends;
 
-import com.github.dockerjava.api.exception.NotModifiedException;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -28,6 +26,11 @@ public class ProcessServer extends ProcessBasedServer {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void waitForExit() throws InterruptedException {
+        process.waitFor();
     }
 
     @Override

@@ -44,7 +44,6 @@ public interface SlaveAPI {
         R accept(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9, T10 arg10);
     }
 
-    void exit();
     <T> RemoteObject<T> copy(RemoteObject<T> original) throws RemoteException;
 
     void call(SerializableRunnable lambda) throws RemoteException;

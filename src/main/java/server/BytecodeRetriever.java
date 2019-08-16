@@ -14,10 +14,10 @@ import java.rmi.server.UnicastRemoteObject;
 /**
  * A class that retrieves bytecode from a specific set of ClassLoaders or BytecodeAgent
  */
-public class BytecodeHoster extends UnicastRemoteObject implements BytecodeLookup {
+public class BytecodeRetriever extends UnicastRemoteObject implements BytecodeLookup {
     private transient ClassLoader[] classLoaders;
 
-    public BytecodeHoster(int unicastPort, ClassLoader... classLoaders) throws RemoteException {
+    public BytecodeRetriever(int unicastPort, ClassLoader... classLoaders) throws RemoteException {
         super(unicastPort, null, port -> {
             ServerSocket ss = new ServerSocket();
             ss.setReuseAddress(true);

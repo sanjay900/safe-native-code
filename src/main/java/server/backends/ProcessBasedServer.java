@@ -3,7 +3,7 @@ package server.backends;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.SystemUtils;
-import server.BytecodeHoster;
+import server.BytecodeRetriever;
 import server.CLibrary;
 import shared.RemoteObject;
 import shared.SerializableConsumer;
@@ -21,6 +21,7 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -104,7 +105,17 @@ abstract class ProcessBasedServer implements Server {
         if (classLoaders == null) {
             ByteBuddyAgent.attach(getJar(), ByteBuddyAgent.ProcessProvider.ForCurrentVm.INSTANCE, registryPort + " " + lookupPort);
         } else {
-            registry.rebind("bytecodeLookup", new BytecodeHoster(lookupPort, classLoaders));
+            BytecodeRetriever br = new BytecodeRetriever(lookupPort, classLoaders);
+            registry.rebind("bytecodeLookup", br);
+            //Start a thread that monitors the remote process, and frees up the retrievers ports when it is completed.
+            new Thread(()->{
+                try {
+                    this.waitForExit();
+                    UnicastRemoteObject.unexportObject(br, true);
+                } catch (InterruptedException | IOException ignored) {
+
+                }
+            }).start();
         }
         Thread.sleep(1000);
     }

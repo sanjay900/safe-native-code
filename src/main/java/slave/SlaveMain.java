@@ -116,11 +116,6 @@ public class SlaveMain extends UnicastRemoteObject implements Slave {
     }
 
     @Override
-    public void exit() {
-        System.exit(0);
-    }
-
-    @Override
     public <T> RemoteObject<T> copy(RemoteObject<T> object) throws RemoteException {
         return wrap(object.get());
     }
