@@ -2,9 +2,7 @@ package server.backends;
 
 import net.bytebuddy.agent.ByteBuddyAgent;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.SystemUtils;
 import server.BytecodeRetriever;
-import server.CLibrary;
 import shared.RemoteObject;
 import shared.SerializableConsumer;
 import shared.SerializableRunnable;
@@ -25,8 +23,6 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import static server.CLibrary.PR_SET_DUMPABLE;
 
 /**
  * A ProcessBasedServer is used when we have a server that executes code in a slave process somewhere.
@@ -52,9 +48,6 @@ abstract class ProcessBasedServer implements Server {
         this.slavePort = findAvailablePort();
         this.lookupPort = findAvailablePort();
         this.useAgent = useAgent;
-        if (SystemUtils.IS_OS_UNIX) {
-            CLibrary.prctl(PR_SET_DUMPABLE, 0);
-        }
         Runtime.getRuntime().addShutdownHook(new Thread(this::exit));
     }
 

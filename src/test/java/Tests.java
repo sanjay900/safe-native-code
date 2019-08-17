@@ -2,6 +2,7 @@ import compiler.JavaCompiler;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import server.SafeCodeLibrary;
 import server.backends.*;
 import shared.IncorrectSlaveException;
 import shared.RemoteObject;
@@ -30,6 +31,7 @@ public class Tests {
 
     @BeforeClass
     public static void init() throws InterruptedException, IOException {
+        SafeCodeLibrary.secure();
         first = new ProcessServer(false, JavaCompiler.getClassLoader());
         second = new ProcessServer(false, JavaCompiler.getClassLoader());
     }

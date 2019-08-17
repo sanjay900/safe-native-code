@@ -30,6 +30,7 @@ shadowJar {
     baseName = 'safeNativeCode'
     classifier = null
     version = null
+    minimize()
     manifest {
         attributes(
                 'Agent-Class': 'server.BytecodeServer',

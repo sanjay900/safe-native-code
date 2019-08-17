@@ -5,8 +5,6 @@ import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.exception.NotModifiedException;
 import com.github.dockerjava.api.model.Bind;
-import com.github.dockerjava.api.model.ExposedPort;
-import com.github.dockerjava.api.model.Ports;
 import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
@@ -15,6 +13,7 @@ import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.dockerjava.core.command.WaitContainerResultCallback;
 
 import java.io.IOException;
+import java.net.SocketException;
 
 /**
  * A Docker Server runs a slave inside a docker container.
@@ -26,26 +25,30 @@ public class DockerServer extends ProcessBasedServer {
     @SuppressWarnings("deprecation")
     public DockerServer(boolean useAgent, ClassLoader... classLoaders) throws IOException, InterruptedException {
         super(useAgent, classLoaders);
-        //Start a docker container based on our openjdk 12 image.
-        DockerClientConfig config = DefaultDockerClientConfig.
-                createDefaultConfigBuilder()
-                .build();
-        dockerClient = DockerClientBuilder.getInstance(config).build();
-        PullImageResultCallback cb = new PullImageResultCallback();
-        dockerClient.pullImageCmd("openjdk").withTag("12").exec(cb);
-        cb.awaitCompletion();
-        ExposedPort exposedRMI = ExposedPort.tcp(lookupPort);
-        Ports portBindings = new Ports();
-        portBindings.bind(exposedRMI, Ports.Binding.bindPort(lookupPort));
-        //Share the folder containing the jar with the container.
-        container = dockerClient.createContainerCmd("openjdk:12")
-                .withBinds(new Bind(getJar().toPath().toAbsolutePath().getParent().toString(), new Volume("/safeNativeCode")))
-                .withWorkingDir("/safeNativeCode")
-                .withCmd(getJavaCommandArgs("java", false, false))
-                .withNetworkMode("host")
-                .exec();
-        dockerClient.startContainerCmd(container.getId()).exec();
-        setupRegistry();
+        try {
+            //Start a docker container based on our openjdk 12 image.
+            DockerClientConfig config = DefaultDockerClientConfig.
+                    createDefaultConfigBuilder()
+                    .build();
+            dockerClient = DockerClientBuilder.getInstance(config).build();
+            PullImageResultCallback cb = new PullImageResultCallback();
+            dockerClient.pullImageCmd("openjdk").withTag("12").exec(cb);
+            cb.awaitCompletion();
+            //Share the folder containing the jar with the container.
+            container = dockerClient.createContainerCmd("openjdk:12")
+                    .withBinds(new Bind(getJar().toPath().toAbsolutePath().getParent().toString(), new Volume("/safeNativeCode")))
+                    .withWorkingDir("/safeNativeCode")
+                    .withCmd(getJavaCommandArgs("java", false, false))
+                    .withNetworkMode("host")
+                    .exec();
+            dockerClient.startContainerCmd(container.getId()).exec();
+            setupRegistry();
+        } catch (RuntimeException ex) {
+            if (ex.getCause() instanceof SocketException) {
+                throw new RuntimeException("Unable to connect to docker. is it running?");
+            }
+            throw ex;
+        }
     }
 
     @Override
