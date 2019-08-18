@@ -28,6 +28,7 @@ public class ClassPreloader {
 
     public void preload() {
         processor.accept(new PreloaderVisitor());
+        System.out.println("Preloaded "+loadedClasses.size()+ " classes.");
     }
 
     class PreloaderVisitor extends ClassPathVisitorAdapter {
