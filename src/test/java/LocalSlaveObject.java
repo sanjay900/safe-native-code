@@ -1,6 +1,3 @@
-package server;
-
-
 import server.backends.Server;
 import shared.RemoteObject;
 import shared.SerializableConsumer;

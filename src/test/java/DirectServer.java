@@ -1,7 +1,5 @@
-package server.backends;
-
 import com.rits.cloning.Cloner;
-import server.LocalSlaveObject;
+import server.backends.Server;
 import shared.RemoteObject;
 import shared.SerializableConsumer;
 import shared.SerializableRunnable;
@@ -11,9 +9,18 @@ import java.rmi.RemoteException;
 
 /**
  * A Direct Server is a server that does absolutely nothing and just runs the code on the same JVM.
- * This is obviously insecure, but it allows for having something to benchmark against.
+ * This is only for benchmarking, and isn't fully compatible as it can't accept classloaders.
  */
 public class DirectServer implements Server {
+
+    /**
+     * Direct server ignores all arguments, but keeps these to be compatible.
+     * @param agent ignored
+     * @param classLoaders ignored
+     */
+    public DirectServer(boolean agent, ClassLoader... classLoaders) {
+
+    }
 
     @Override
     public void exit() {

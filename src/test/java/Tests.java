@@ -3,7 +3,10 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import server.SafeCodeLibrary;
-import server.backends.*;
+import server.backends.DockerServer;
+import server.backends.ProcessServer;
+import server.backends.Server;
+import server.backends.VagrantServer;
 import shared.IncorrectSlaveException;
 import shared.RemoteObject;
 
@@ -126,11 +129,7 @@ public class Tests {
         for (Class<? extends Server> clazz : backendsClasses) {
             System.out.println("Constructing " + clazz.getName());
             Instant start = Instant.now();
-            try {
-                servers.add(clazz.getDeclaredConstructor(boolean.class, ClassLoader[].class).newInstance(false, loaders));
-            } catch (NoSuchMethodException ex) {
-                servers.add(clazz.getDeclaredConstructor().newInstance());
-            }
+            servers.add(clazz.getDeclaredConstructor(boolean.class, ClassLoader[].class).newInstance(false, loaders));
             Instant end = Instant.now();
             System.out.println("Time taken to start " + clazz.getName() + ": " + Duration.between(start, end).toMillis());
         }
@@ -212,7 +211,7 @@ public class Tests {
             try {
                 server.call(() -> System.exit(1));
             } catch (RemoteException ignored) {
-              //We expect things to break here, as the RMI connection will just terminate suddenly.
+                //We expect things to break here, as the RMI connection will just terminate suddenly.
             }
             //Vagrant and docker do take a second or so to stop
             Thread.sleep(1000);
