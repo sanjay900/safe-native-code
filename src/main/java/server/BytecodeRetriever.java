@@ -32,7 +32,7 @@ public class BytecodeRetriever extends UnicastRemoteObject implements BytecodeLo
             return BytecodeAgent.classFiles.get(clazz);
         }
         for (ClassLoader loader : classLoaders) {
-            InputStream is = loader.getResourceAsStream(clazz + ".class");
+            InputStream is = loader.getResourceAsStream(clazz.replace(".", "/") + ".class");
             if (is != null) {
                 try {
                     return IOUtils.toByteArray(is);
