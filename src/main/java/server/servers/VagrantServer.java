@@ -1,4 +1,4 @@
-package server.backends;
+package server.servers;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -7,11 +7,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class VagrantServer extends ProcessBasedServer {
+public class VagrantServer extends AbstractServer {
     private Path temp = Files.createTempDirectory("safeNativeCode-VM-");
 
     public VagrantServer(boolean useAgent, ClassLoader... classLoaders) throws IOException, InterruptedException {
-        super(useAgent, classLoaders);
+        super(useAgent, true, classLoaders);
         //Create a vagrant config based on a template
         String vagrantConfig = String.join("\n", IOUtils.readLines(VagrantServer.class.getResourceAsStream("/Vagrantfile"), "utf-8"));
         vagrantConfig = vagrantConfig.replaceAll("<registryPort>", registryPort + "");

@@ -15,7 +15,7 @@ public class SlaveClassloader extends SecureClassLoader {
     private static Retriever lookup;
     //We need a list of prohibited classes, as we do not want to proxy core java classes through our proxy.
     private String[] prohibited = new String[] {"java.","javax.","com.sun.","sun.","jdk."};
-    public SlaveClassloader(ClassLoader parent) {
+    SlaveClassloader(ClassLoader parent) {
         super(parent);
     }
 
@@ -35,6 +35,10 @@ public class SlaveClassloader extends SecureClassLoader {
                 return null;
             }
         }
+        //This only occurrs with DirectServer, and in that case, we want server stuff loaded using the default classloader anyway.
+        if (name.startsWith("shared") || name.startsWith("server")) {
+            return super.loadClass(name);
+        }
         // If we don't have a reference to the main JVM yet, it's too early to need to proxy classes through it.
         // We also can not proxy core java classes, as java specifically blocks redefining anything inside the java package.
         if (lookup == null || Arrays.stream(prohibited).anyMatch(name::startsWith)) return super.loadClass(name);
@@ -44,10 +48,10 @@ public class SlaveClassloader extends SecureClassLoader {
             return super.defineClass(name, b, 0, b.length);
         } catch (RemoteException e) {
             // If we loose connection to the main JVM, just throw a class not found exception.
-           throw new ClassNotFoundException(e.getMessage(), e);
+           throw new ClassNotFoundException("Unable to load: "+name, e);
         }
     }
-
+    // Due to the fact that this is used across modules (SlaveClassloader and SlaveMain exist inside different ClassLoaders), we need to make it public.
     public static void setLookup(Retriever lookup) {
         SlaveClassloader.lookup = lookup;
     }

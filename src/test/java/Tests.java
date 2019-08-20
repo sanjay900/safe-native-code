@@ -3,10 +3,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import server.SafeCodeLibrary;
-import server.backends.DockerServer;
-import server.backends.ProcessServer;
-import server.backends.Server;
-import server.backends.VagrantServer;
+import server.servers.*;
 import shared.IncorrectSlaveException;
 import shared.RemoteObject;
 
@@ -160,6 +157,31 @@ public class Tests {
                         "public String getData() {return \"test\";}" +
                         "}", "Test");
         Assert.assertEquals("test", first.call(() -> {
+            try {
+                assert clazz != null;
+                return clazz.newInstance();
+            } catch (InstantiationException | IllegalAccessException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }).call(s -> {
+            try {
+                return s.getClass().getDeclaredMethod("getData").invoke(s);
+            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }).get());
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    public void TestDynamicCompilationDirect() throws Exception {
+        Class<?> clazz = JavaCompiler.compile(
+                "public class Test {" +
+                        "public String getData() {return \"test\";}" +
+                        "}", "Test");
+        Assert.assertEquals("test", new DirectServer(false, JavaCompiler.getClassLoader()).call(() -> {
             try {
                 assert clazz != null;
                 return clazz.newInstance();

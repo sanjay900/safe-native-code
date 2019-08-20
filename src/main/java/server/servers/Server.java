@@ -1,4 +1,4 @@
-package server.backends;
+package server.servers;
 
 import shared.SlaveAPI;
 

@@ -1,6 +1,6 @@
 package shared;
 
-import server.backends.Server;
+import server.servers.Server;
 
 import java.io.Serializable;
 import java.rmi.RemoteException;

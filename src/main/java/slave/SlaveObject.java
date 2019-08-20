@@ -1,6 +1,6 @@
 package slave;
 
-import server.backends.Server;
+import server.servers.Server;
 import shared.RemoteObject;
 import shared.SerializableConsumer;
 

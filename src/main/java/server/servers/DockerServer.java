@@ -1,4 +1,4 @@
-package server.backends;
+package server.servers;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
@@ -14,18 +14,17 @@ import com.github.dockerjava.core.command.WaitContainerResultCallback;
 
 import java.io.IOException;
 import java.net.SocketException;
-import java.nio.charset.StandardCharsets;
 
 /**
  * A Docker Server runs a slave inside a docker container.
  */
-public class DockerServer extends ProcessBasedServer {
+public class DockerServer extends AbstractServer {
     private DockerClient dockerClient;
     private CreateContainerResponse container;
 
     @SuppressWarnings("deprecation")
     public DockerServer(boolean useAgent, ClassLoader... classLoaders) throws IOException, InterruptedException {
-        super(useAgent, classLoaders);
+        super(useAgent, true, classLoaders);
         try {
             //Start a docker container based on our openjdk 12 image.
             DockerClientConfig config = DefaultDockerClientConfig.

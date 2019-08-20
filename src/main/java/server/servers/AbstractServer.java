@@ -1,9 +1,12 @@
-package server.backends;
+package server.servers;
 
 import net.bytebuddy.agent.ByteBuddyAgent;
 import org.apache.commons.io.FilenameUtils;
 import server.Retriever;
-import shared.*;
+import shared.RemoteObject;
+import shared.SerializableConsumer;
+import shared.SerializableRunnable;
+import shared.SerializableSupplier;
 import slave.Slave;
 import slave.SlaveMain;
 
@@ -22,30 +25,33 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * A ProcessBasedServer is used when we have a server that executes code in a slave process somewhere.
+ * A AbstractServer is used when we have a server that executes code in a slave process somewhere.
  */
-abstract class ProcessBasedServer implements Server {
+abstract class AbstractServer implements Server {
     private Slave slave;
     int registryPort;
     int slavePort;
-    int lookupPort;
+    private int lookupPort;
     private ClassLoader[] classLoaders;
     private boolean useAgent;
+    private boolean addShutdownHooks;
 
     /**
      * Create a slave that runs in another process somewhere
      *
      * @param useAgent     true to use a java agent to capture all classes, false to pass in classloaders below
      * @param classLoaders a list of classloads to supply classes to the slave, if useAgent is false
-     * @throws IOException
      */
-    ProcessBasedServer(boolean useAgent, ClassLoader... classLoaders) throws IOException {
+    AbstractServer(boolean useAgent, boolean useShutdownHook, ClassLoader... classLoaders) throws IOException {
+        this.addShutdownHooks = useShutdownHook;
         this.classLoaders = classLoaders;
         this.registryPort = findAvailablePort();
         this.slavePort = findAvailablePort();
         this.lookupPort = findAvailablePort();
         this.useAgent = useAgent;
-        Runtime.getRuntime().addShutdownHook(new Thread(this::exit));
+        if (useShutdownHook) {
+            Runtime.getRuntime().addShutdownHook(new Thread(this::exit));
+        }
     }
 
     private int findAvailablePort() throws IOException {
@@ -56,24 +62,26 @@ abstract class ProcessBasedServer implements Server {
         return ss.getLocalPort();
     }
 
+    String[] getSlaveArgs(boolean isVagrant) {
+        return new String[]{registryPort + "", slavePort + "", lookupPort + "", isVagrant + ""};
+    }
+
     String[] getJavaCommandArgs(String javaCommand, boolean jarWithPath, boolean isVagrant) {
         List<String> args = new ArrayList<>();
         args.add(javaCommand);
-//        args.add("-Djava.system.class.loader=slave.SlaveClassloader");
         //Give us the ability to reflect into rmi so we can use it on VMs
         //On Java 9+, we need to explicitly grant ourselves access to the rmi module
         if (Integer.parseInt(System.getProperty("java.version").split("\\.")[0]) >= 9) {
             args.addAll(Arrays.asList("--add-opens", "java.rmi/sun.rmi.registry=ALL-UNNAMED"));
         }
         args.addAll(Arrays.asList("-cp", jarWithPath ? getJar().getAbsolutePath() : getJar().getName(), SlaveMain.class.getName()));
-        args.addAll(Arrays.asList(registryPort + "", slavePort + "", lookupPort + ""));
-        args.add(isVagrant + "");
+        args.addAll(Arrays.asList(getSlaveArgs(isVagrant)));
         return args.toArray(new String[0]);
     }
 
     static File getJar() {
         try {
-            File jar = new File(ProcessBasedServer.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+            File jar = new File(AbstractServer.class.getProtectionDomain().getCodeSource().getLocation().toURI());
             if (FilenameUtils.getExtension(jar.getPath()).equals("jar")) {
                 return jar;
             }
@@ -94,15 +102,17 @@ abstract class ProcessBasedServer implements Server {
             try {
                 Retriever br = new Retriever(lookupPort, classLoaders);
                 registry.rebind("bytecodeLookup", br);
-                //Start a thread that monitors the remote process, and frees up the retrievers ports when it is completed.
-                new Thread(() -> {
-                    try {
-                        this.waitForExit();
-                        UnicastRemoteObject.unexportObject(br, true);
-                    } catch (InterruptedException | IOException ignored) {
+                if (addShutdownHooks) {
+                    //Start a thread that monitors the remote process, and frees up the retrievers ports when it is completed.
+                    new Thread(() -> {
+                        try {
+                            this.waitForExit();
+                            UnicastRemoteObject.unexportObject(br, true);
+                        } catch (InterruptedException | IOException ignored) {
 
-                    }
-                }).start();
+                        }
+                    }).start();
+                }
                 break;
             } catch (RemoteException e) {
                 Thread.sleep(10);

@@ -5,6 +5,7 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.rmi.RemoteException;
@@ -42,11 +43,14 @@ public class Retriever extends UnicastRemoteObject implements shared.Retriever {
         }
         return null;
     }
+
+    private static PrintStream out = System.out;
+    private static PrintStream err = System.err;
     public void printOut(int i) {
-        System.out.write(i);
+        out.write(i);
     }
 
     public void printErr(int i) {
-        System.err.write(i);
+        err.write(i);
     }
 }
