@@ -4,16 +4,17 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.exception.NotModifiedException;
-import com.github.dockerjava.api.model.Bind;
-import com.github.dockerjava.api.model.Volume;
+import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
+import com.github.dockerjava.core.command.LogContainerResultCallback;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.dockerjava.core.command.WaitContainerResultCallback;
 
 import java.io.IOException;
 import java.net.SocketException;
+import java.nio.charset.StandardCharsets;
 
 /**
  * A Docker Server runs a slave inside a docker container.
@@ -31,7 +32,13 @@ public class DockerServer extends ProcessBasedServer {
                     createDefaultConfigBuilder()
                     .build();
             dockerClient = DockerClientBuilder.getInstance(config).build();
-            PullImageResultCallback cb = new PullImageResultCallback();
+            PullImageResultCallback cb = new PullImageResultCallback() {
+                @Override
+                public void onNext(PullResponseItem item) {
+                    super.onNext(item);
+                    System.out.println(item.getStatus());
+                }
+            };
             dockerClient.pullImageCmd("openjdk").withTag("12").exec(cb);
             cb.awaitCompletion();
             //Share the folder containing the jar with the container.
@@ -42,6 +49,18 @@ public class DockerServer extends ProcessBasedServer {
                     .withNetworkMode("host")
                     .exec();
             dockerClient.startContainerCmd(container.getId()).exec();
+            dockerClient.logContainerCmd(container.getId()).withStdOut(true).withStdErr(true).exec(new LogContainerResultCallback() {
+                @Override
+                public void onNext(Frame item) {
+                    super.onNext(item);
+                    if (item.getStreamType() == StreamType.STDOUT) {
+                        System.out.println(new String(item.getPayload()));
+                    }
+                    if (item.getStreamType() == StreamType.STDERR) {
+                        System.err.println(new String(item.getPayload()));
+                    }
+                }
+            });
             setupRegistry();
         } catch (RuntimeException ex) {
             if (ex.getCause() instanceof SocketException) {

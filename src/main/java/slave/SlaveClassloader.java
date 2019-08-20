@@ -1,7 +1,7 @@
 package slave;
 
 import org.apache.commons.io.IOUtils;
-import shared.BytecodeLookup;
+import shared.Retriever;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -9,10 +9,10 @@ import java.security.SecureClassLoader;
 import java.util.Arrays;
 
 /**
- * SlaveClassloader facilitates loading classes from the main process, using RMI. We retrieve a BytecodeLookup from the host, and use it to load classes.
+ * SlaveClassloader facilitates loading classes from the main process, using RMI. We retrieve a Retriever from the host, and use it to load classes.
  */
 public class SlaveClassloader extends SecureClassLoader {
-    private static BytecodeLookup lookup;
+    private static Retriever lookup;
     //We need a list of prohibited classes, as we do not want to proxy core java classes through our proxy.
     private String[] prohibited = new String[] {"java.","javax.","com.sun.","sun.","jdk."};
     public SlaveClassloader(ClassLoader parent) {
@@ -24,7 +24,7 @@ public class SlaveClassloader extends SecureClassLoader {
         // We need to make sure the slave main and slave object are loaded using the correct classloader.
         // This is due to the fact that anything executed from the slave will use the parent's classloader.
         // And we need everything to go through this class loader, so that we can proxy calls to the main jvm when required.
-        if (name.endsWith("slave.SlaveMain") || name.endsWith("slave.SlaveObject")) {
+        if (name.endsWith("slave.SlaveMain") || name.endsWith("slave.SlaveMain$1") || name.endsWith("slave.SlaveMain$2") || name.endsWith("slave.SlaveObject")) {
             // Essentially, we just reload these specific classes using this classloader instead of the app classloader.
             try {
                 byte[] b = IOUtils.toByteArray(getResourceAsStream(name.replace(".","/")+".class"));
@@ -46,7 +46,7 @@ public class SlaveClassloader extends SecureClassLoader {
         }
     }
 
-    public static void setLookup(BytecodeLookup lookup) {
+    public static void setLookup(Retriever lookup) {
         SlaveClassloader.lookup = lookup;
     }
 }

@@ -13,7 +13,7 @@ public class ProcessServer extends ProcessBasedServer {
     public ProcessServer(boolean useAgent, ClassLoader... classLoaders) throws IOException, InterruptedException {
         super(useAgent, classLoaders);
         Path javaProcess = Paths.get(System.getProperty("java.home"), "bin", "java");
-        process = new ProcessBuilder(getJavaCommandArgs(javaProcess.toString(), true, false)).start();
+        process = new ProcessBuilder(getJavaCommandArgs(javaProcess.toString(), true, false)).inheritIO().start();
         //End the remoteSlave process if the parent process ends.
         Runtime.getRuntime().addShutdownHook(new Thread(process::destroy));
         setupRegistry();

@@ -2,11 +2,8 @@ package server.backends;
 
 import net.bytebuddy.agent.ByteBuddyAgent;
 import org.apache.commons.io.FilenameUtils;
-import server.BytecodeRetriever;
-import shared.RemoteObject;
-import shared.SerializableConsumer;
-import shared.SerializableRunnable;
-import shared.SerializableSupplier;
+import server.Retriever;
+import shared.*;
 import slave.Slave;
 import slave.SlaveMain;
 
@@ -95,7 +92,7 @@ abstract class ProcessBasedServer implements Server {
 
         while (true) {
             try {
-                BytecodeRetriever br = new BytecodeRetriever(lookupPort, classLoaders);
+                Retriever br = new Retriever(lookupPort, classLoaders);
                 registry.rebind("bytecodeLookup", br);
                 //Start a thread that monitors the remote process, and frees up the retrievers ports when it is completed.
                 new Thread(() -> {

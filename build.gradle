@@ -24,13 +24,13 @@ dependencies {
     compile group: 'javax.activation', name: 'activation', version: '1.1.1'
     compile 'org.slf4j:slf4j-nop:1.7.25'
     compile group: 'net.java.dev.jna', name: 'jna', version: '5.4.0'
+    compile("javax.inject:javax.inject:1")
 }
 
 shadowJar {
     baseName = 'safeNativeCode'
     classifier = null
     version = null
-    minimize()
     manifest {
         attributes(
                 'Agent-Class': 'server.BytecodeServer',

@@ -19,7 +19,7 @@ public class VagrantServer extends ProcessBasedServer {
         vagrantConfig = vagrantConfig.replaceAll("<source>", getJar().getAbsolutePath());
         vagrantConfig = vagrantConfig.replaceAll("<javaCommand>", String.join(" ", getJavaCommandArgs("java", false, true)));
         Files.write(temp.resolve("Vagrantfile"), vagrantConfig.getBytes());
-        new ProcessBuilder("vagrant", "up").directory(temp.toFile()).start();
+        new ProcessBuilder("vagrant", "up").directory(temp.toFile()).inheritIO().start();
         setupRegistry();
     }
 

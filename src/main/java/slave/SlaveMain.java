@@ -3,8 +3,11 @@ package slave;
 import shared.*;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
+import java.nio.charset.StandardCharsets;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -40,7 +43,21 @@ public class SlaveMain extends UnicastRemoteObject implements Slave {
         while (!Arrays.asList(registry.list()).contains("bytecodeLookup")) {
             Thread.sleep(10);
         }
-        SlaveClassloader.setLookup((BytecodeLookup) registry.lookup("bytecodeLookup"));
+        Retriever r = (Retriever) registry.lookup("bytecodeLookup");
+        SlaveClassloader.setLookup(r);
+        //Override sysout so that printing works.
+        System.setOut(new PrintStream(new OutputStream() {
+            @Override
+            public void write(int b) throws IOException {
+                r.printOut(b);
+            }
+        }));
+        System.setErr(new PrintStream(new OutputStream() {
+            @Override
+            public void write(int b) throws IOException {
+                r.printErr(b);
+            }
+        }));
         registry.rebind("slave", this);
     }
 

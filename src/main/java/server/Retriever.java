@@ -2,7 +2,6 @@ package server;
 
 
 import org.apache.commons.io.IOUtils;
-import shared.BytecodeLookup;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,10 +13,10 @@ import java.rmi.server.UnicastRemoteObject;
 /**
  * A class that retrieves bytecode from a specific set of ClassLoaders or BytecodeAgent
  */
-public class BytecodeRetriever extends UnicastRemoteObject implements BytecodeLookup {
+public class Retriever extends UnicastRemoteObject implements shared.Retriever {
     private transient ClassLoader[] classLoaders;
 
-    public BytecodeRetriever(int unicastPort, ClassLoader... classLoaders) throws RemoteException {
+    public Retriever(int unicastPort, ClassLoader... classLoaders) throws RemoteException {
         super(unicastPort, null, port -> {
             ServerSocket ss = new ServerSocket();
             ss.setReuseAddress(true);
@@ -42,5 +41,12 @@ public class BytecodeRetriever extends UnicastRemoteObject implements BytecodeLo
             }
         }
         return null;
+    }
+    public void printOut(int i) {
+        System.out.write(i);
+    }
+
+    public void printErr(int i) {
+        System.err.write(i);
     }
 }
