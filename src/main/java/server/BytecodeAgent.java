@@ -25,6 +25,7 @@ public class BytecodeAgent implements ClassFileTransformer {
         int lookupPort = Integer.parseInt(args.split(" ")[1]);
         Supplier supplier = new Supplier(lookupPort, ClassLoader.getSystemClassLoader());
         //Add a transformer that simply stores all classes encountered to classFiles
+        //By using retransformation, we can reload all existing classes and get a true bytecode retriever for all classes.
         instrumentation.addTransformer(new BytecodeAgent(), true);
         for (Class<?> c : instrumentation.getAllLoadedClasses()) {
             if (instrumentation.isModifiableClass(c)) {
