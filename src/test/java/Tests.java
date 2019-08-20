@@ -278,4 +278,23 @@ public class Tests {
             return null;
         }).get());
     }
+
+    @Test(expected = UnmarshalException.class)
+    @SuppressWarnings("deprecation")
+    public void TestAgent() throws Exception {
+
+        Class<?> clazz = JavaCompiler.compile(
+                "public class Test implements java.io.Serializable {" +
+                        "public String getData() {return \"test\";}" +
+                        "}", "Test");
+        Assert.assertEquals("test", new DirectServer(true).call(() -> {
+            try {
+                assert clazz != null;
+                return clazz.newInstance();
+            } catch (InstantiationException | IllegalAccessException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }).get());
+    }
 }

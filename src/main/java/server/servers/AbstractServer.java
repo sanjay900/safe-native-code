@@ -96,28 +96,32 @@ abstract class AbstractServer implements Server {
         Registry registry = LocateRegistry.getRegistry(registryPort);
         if (useAgent) {
             ByteBuddyAgent.attach(getJar(), ByteBuddyAgent.ProcessProvider.ForCurrentVm.INSTANCE, registryPort + " " + lookupPort);
-            return;
+        } else {
+            while (true) {
+                try {
+                    Supplier retriever = new Supplier(lookupPort, classLoaders);
+                    registry.rebind("bytecodeLookup", retriever);
+                    if (addShutdownHooks) {
+                        //Start a thread that monitors the remote process, and frees up the retrievers ports when it is completed.
+                        new Thread(() -> {
+                            try {
+                                this.waitForExit();
+                                UnicastRemoteObject.unexportObject(retriever, true);
+                            } catch (InterruptedException | IOException ex) {
+                                throw new RuntimeException(ex);
+                            }
+                        }).start();
+                    }
+                    break;
+                } catch (RemoteException e) {
+                    Thread.sleep(10);
+                }
+            }
         }
 
-        while (true) {
-            try {
-                Supplier retriever = new Supplier(lookupPort, classLoaders);
-                registry.rebind("bytecodeLookup", retriever);
-                if (addShutdownHooks) {
-                    //Start a thread that monitors the remote process, and frees up the retrievers ports when it is completed.
-                    new Thread(() -> {
-                        try {
-                            this.waitForExit();
-                            UnicastRemoteObject.unexportObject(retriever, true);
-                        } catch (InterruptedException | IOException ex) {
-                            throw new RuntimeException(ex);
-                        }
-                    }).start();
-                }
-                break;
-            } catch (RemoteException e) {
-                Thread.sleep(10);
-            }
+
+        while (!Arrays.toString(registry.list()).contains("bytecodeLookup")) {
+            Thread.sleep(10);
         }
         while (true) {
             try {

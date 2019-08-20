@@ -33,7 +33,7 @@ shadowJar {
     version = null
     manifest {
         attributes(
-                'Agent-Class': 'server.BytecodeServer',
+                'Agent-Class': 'server.BytecodeAgent',
                 'Can-Redefine-Classes': 'true',
                 'Can-Retransform-Classes': 'true',
                 'Can-Set-Native-Method-Prefix': 'true',
