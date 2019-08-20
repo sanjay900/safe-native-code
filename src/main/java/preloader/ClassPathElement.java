@@ -49,7 +49,7 @@ class ClassPathElement {
             for (File f : files) {
                 handleFile(visitor, f, false, newPath);
             }
-        } else {
+        } else if (newPath != null){
             handleClasspathFile(visitor, newPath);
         }
     }
