@@ -9,7 +9,7 @@ import java.security.SecureClassLoader;
 import java.util.Arrays;
 
 /**
- * SlaveClassloader facilitates loading classes from the main process, using RMI. We retrieve a Retriever from the host, and use it to load classes.
+ * SlaveClassloader facilitates loading classes from the main process, using RMI. We retrieve a Supplier from the host, and use it to load classes.
  */
 public class SlaveClassloader extends SecureClassLoader {
     private static Retriever lookup;

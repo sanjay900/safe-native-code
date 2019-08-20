@@ -21,7 +21,7 @@ public class BytecodeAgent implements ClassFileTransformer {
     public static void agentmain(String args, Instrumentation instrumentation) throws RemoteException {
         int registryPort = Integer.parseInt(args.split(" ")[0]);
         int lookupPort = Integer.parseInt(args.split(" ")[1]);
-        Retriever server = new Retriever(lookupPort, ClassLoader.getSystemClassLoader());
+        Supplier server = new Supplier(lookupPort, ClassLoader.getSystemClassLoader());
         //Add a transformer that simply stores all classes encountered to classFiles
         instrumentation.addTransformer(new BytecodeAgent());
         Registry registry = LocateRegistry.getRegistry(registryPort);

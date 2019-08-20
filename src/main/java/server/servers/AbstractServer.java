@@ -2,7 +2,7 @@ package server.servers;
 
 import net.bytebuddy.agent.ByteBuddyAgent;
 import org.apache.commons.io.FilenameUtils;
-import server.Retriever;
+import server.Supplier;
 import shared.RemoteObject;
 import shared.SerializableConsumer;
 import shared.SerializableRunnable;
@@ -101,7 +101,7 @@ abstract class AbstractServer implements Server {
 
         while (true) {
             try {
-                Retriever retriever = new Retriever(lookupPort, classLoaders);
+                Supplier retriever = new Supplier(lookupPort, classLoaders);
                 registry.rebind("bytecodeLookup", retriever);
                 if (addShutdownHooks) {
                     //Start a thread that monitors the remote process, and frees up the retrievers ports when it is completed.
