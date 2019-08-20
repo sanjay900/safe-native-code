@@ -1,7 +1,7 @@
 package server;
 
 import org.apache.commons.lang.SystemUtils;
-import preloader.loader.ClassPreloader;
+import preloader.ClassPreloader;
 
 import java.io.IOException;
 import java.nio.file.Files;

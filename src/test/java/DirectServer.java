@@ -9,7 +9,7 @@ import java.rmi.RemoteException;
 
 /**
  * A Direct Server is a server that does absolutely nothing and just runs the code on the same JVM.
- * This is only for benchmarking, and isn't fully compatible as it can't accept classloaders.
+ * This is only for benchmarking, and isn't fully compatible as it can't handle classloaders.
  */
 public class DirectServer implements Server {
 

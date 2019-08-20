@@ -39,7 +39,7 @@ shadowJar {
                 'Can-Set-Native-Method-Prefix': 'true',
                 'Implementation-Title': "BytecodeServerAgent",
                 'Implementation-Version': rootProject.version,
-                'Add-Opens':'java.rmi/sun.rmi.registry'
+                'Add-Opens': 'java.rmi/sun.rmi.registry'
         )
     }
     minimize()
