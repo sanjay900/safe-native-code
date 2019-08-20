@@ -31,12 +31,11 @@ public class SlaveMain extends UnicastRemoteObject implements Slave {
         if (isVagrant) {
             //For vagrant, requests don't come from localhost, and instead come from 10.0.2.2.
             //RMI isn't supposed to be used this way, but we can abuse the fact that RMI stores a cache of allowed addresses in order to make things work.
-            //It's not pretty, but it does work. One would assume vagrant isn't going to be used all that much anyways.
-            //For vagrant, we have to proxy back the requests for bytecodeLookup back to the host, as the host isn't localhost.
             Field f = Class.forName("sun.rmi.registry.RegistryImpl").getDeclaredField("allowedAccessCache");
             f.setAccessible(true);
             InetAddress host = InetAddress.getByName("10.0.2.2");
             ((Hashtable) f.get(null)).put(host, host);
+            //For vagrant, we have to proxy back the requests for bytecodeLookup back to the host, as the host isn't localhost.
             new ProcessBuilder("socat", "tcp-l:" + lookupPort + ",fork,reuseaddr", "tcp:10.0.2.2:" + lookupPort).inheritIO().start();
         }
 
@@ -45,7 +44,7 @@ public class SlaveMain extends UnicastRemoteObject implements Slave {
         }
         Retriever r = (Retriever) registry.lookup("bytecodeLookup");
         SlaveClassloader.setLookup(r);
-        //Override sysout so that printing works.
+        //Redirect output so that printing works.
         System.setOut(new PrintStream(new OutputStream() {
             @Override
             public void write(int b) throws IOException {
