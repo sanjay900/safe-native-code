@@ -21,7 +21,7 @@ public class SafeCodeLibrary {
                 }
             } catch (IOException e) {
                 System.out.println("Your kernel version does not appear to support the yama security module. This is a requirement for this program.");
-                System.out.println("Error: "+e.getLocalizedMessage());
+                System.out.println("Error: " + e.getLocalizedMessage());
                 System.exit(1);
             }
 
