@@ -25,7 +25,6 @@ public class SlaveMain extends UnicastRemoteObject implements Slave {
 
 
         Registry registry = LocateRegistry.createRegistry(registryPort);
-        registry.rebind("slave", this);
         if (isVagrant) {
             //For vagrant, requests don't come from localhost, and instead come from 10.0.2.2.
             //RMI isn't supposed to be used this way, but we can abuse the fact that RMI stores a cache of allowed addresses in order to make things work.
@@ -42,6 +41,7 @@ public class SlaveMain extends UnicastRemoteObject implements Slave {
             Thread.sleep(10);
         }
         SlaveClassloader.setLookup((BytecodeLookup) registry.lookup("bytecodeLookup"));
+        registry.rebind("slave", this);
     }
 
     @Override

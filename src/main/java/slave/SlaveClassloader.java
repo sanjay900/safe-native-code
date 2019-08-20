@@ -6,13 +6,15 @@ import shared.BytecodeLookup;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.security.SecureClassLoader;
+import java.util.Arrays;
 
 /**
  * SlaveClassloader facilitates loading classes from the main process, using RMI. We retrieve a BytecodeLookup from the host, and use it to load classes.
  */
 public class SlaveClassloader extends SecureClassLoader {
     private static BytecodeLookup lookup;
-
+    //We need a list of prohibited classes, as we do not want to proxy core java classes through our proxy.
+    private String[] prohibited = new String[] {"java.","javax.","com.sun.","sun.","jdk."};
     public SlaveClassloader(ClassLoader parent) {
         super(parent);
     }
@@ -33,7 +35,7 @@ public class SlaveClassloader extends SecureClassLoader {
         }
         // If we don't have a reference to the main JVM yet, it's too early to need to proxy classes through it.
         // We also can not proxy core java classes, as java specifically blocks redefining anything inside the java package.
-        if (lookup == null || name.startsWith("java")) return super.loadClass(name);
+        if (lookup == null || Arrays.stream(prohibited).anyMatch(name::startsWith)) return super.loadClass(name);
         try {
             byte[] b = lookup.getByteCode(name);
             if (b == null) return super.loadClass(name);

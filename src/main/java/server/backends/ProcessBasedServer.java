@@ -87,32 +87,38 @@ abstract class ProcessBasedServer implements Server {
     }
 
     void setupRegistry() throws RemoteException, InterruptedException {
-        Registry registry;
-        while (true) {
-            try {
-                registry = LocateRegistry.getRegistry(registryPort);
-                slave = (Slave) registry.lookup("slave");
-                break;
-            } catch (NotBoundException | RemoteException e) {
-                Thread.sleep(10);
-            }
-        }
+        Registry registry = LocateRegistry.getRegistry(registryPort);
         if (useAgent) {
             ByteBuddyAgent.attach(getJar(), ByteBuddyAgent.ProcessProvider.ForCurrentVm.INSTANCE, registryPort + " " + lookupPort);
             return;
         }
-        BytecodeRetriever br = new BytecodeRetriever(lookupPort, classLoaders);
-        registry.rebind("bytecodeLookup", br);
-        //Start a thread that monitors the remote process, and frees up the retrievers ports when it is completed.
-        new Thread(() -> {
+
+        while (true) {
             try {
-                this.waitForExit();
-                UnicastRemoteObject.unexportObject(br, true);
-            } catch (InterruptedException | IOException ignored) {
+                BytecodeRetriever br = new BytecodeRetriever(lookupPort, classLoaders);
+                registry.rebind("bytecodeLookup", br);
+                //Start a thread that monitors the remote process, and frees up the retrievers ports when it is completed.
+                new Thread(() -> {
+                    try {
+                        this.waitForExit();
+                        UnicastRemoteObject.unexportObject(br, true);
+                    } catch (InterruptedException | IOException ignored) {
 
+                    }
+                }).start();
+                break;
+            } catch (RemoteException e) {
+                Thread.sleep(10);
             }
-        }).start();
-
+        }
+        while (true) {
+            try {
+                slave = (Slave) registry.lookup("slave");
+                break;
+            } catch (NotBoundException e) {
+                Thread.sleep(10);
+            }
+        }
     }
 
     @Override
