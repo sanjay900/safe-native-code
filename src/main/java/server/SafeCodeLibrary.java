@@ -11,7 +11,7 @@ import static server.CLibrary.PR_SET_DUMPABLE;
 
 public class SafeCodeLibrary {
     public static void secure() {
-        if (SystemUtils.IS_OS_UNIX) {
+        if (SystemUtils.IS_OS_UNIX && !SystemUtils.IS_OS_MAC_OSX) {
             CLibrary.prctl(PR_SET_DUMPABLE, 0);
             try {
                 int yamaVer = Integer.parseInt(Files.readAllLines(Paths.get("/proc/sys/kernel/yama/ptrace_scope")).get(0));
@@ -25,6 +25,10 @@ public class SafeCodeLibrary {
                 System.exit(1);
             }
 
+        }
+
+        if (SystemUtils.IS_OS_WINDOWS) {
+            System.out.println("You appear to be using windows. We cannot guarantee that windows is secure.");
         }
         new ClassPreloader().preload();
     }
