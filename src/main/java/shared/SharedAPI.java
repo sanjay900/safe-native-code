@@ -3,7 +3,7 @@ package shared;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 
-public interface SlaveAPI {
+public interface SharedAPI {
     interface One<R, T1> extends Serializable {
         R accept(T1 args);
     }

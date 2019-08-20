@@ -35,7 +35,7 @@ public class SlaveClassloader extends SecureClassLoader {
                 return null;
             }
         }
-        //This only occurrs with DirectServer, and in that case, we want server stuff loaded using the default classloader anyway.
+        //This only occurs with DirectServer, and in that case, we want server stuff loaded using the default classloader anyway.
         if (name.startsWith("shared") || name.startsWith("server")) {
             return super.loadClass(name);
         }
@@ -51,6 +51,7 @@ public class SlaveClassloader extends SecureClassLoader {
            throw new ClassNotFoundException("Unable to load: "+name, e);
         }
     }
+
     // Due to the fact that this is used across modules (SlaveClassloader and SlaveMain exist inside different ClassLoaders), we need to make it public.
     public static void setLookup(Retriever lookup) {
         SlaveClassloader.lookup = lookup;

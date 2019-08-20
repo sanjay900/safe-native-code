@@ -211,7 +211,7 @@ public class Tests {
         for (Server server : servers) {
             String name = server.getClass().getName();
             System.out.println("Stopping: " + name);
-            server.exit();
+            server.terminate();
             Assert.assertFalse(server.isAlive());
             System.out.println("Stopped: " + name);
         }
@@ -226,7 +226,7 @@ public class Tests {
                 new VagrantServer(false, JavaCompiler.getClassLoader()),
         };
 
-        //Simulate a process crash with System.exit
+        //Simulate a process crash with System.terminate
         for (Server server : servers) {
             String name = server.getClass().getName();
             System.out.println("Crashing: " + name);
@@ -254,7 +254,7 @@ public class Tests {
         for (Server server : servers) {
             String name = server.getClass().getName();
             System.out.println("Killing: " + name);
-            server.exit();
+            server.terminate();
             Assert.assertFalse(server.isAlive());
             System.out.println("Stopped: " + name);
         }

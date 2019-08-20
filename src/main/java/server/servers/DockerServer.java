@@ -22,6 +22,12 @@ public class DockerServer extends AbstractServer {
     private DockerClient dockerClient;
     private CreateContainerResponse container;
 
+    /**
+     * Create a slave that runs inside a docker container
+     *
+     * @param useAgent     true to use a java agent to capture all classes, false to pass in classloaders below
+     * @param classLoaders a list of classloaders to supply classes to the slave, if useAgent is false
+     */
     @SuppressWarnings("deprecation")
     public DockerServer(boolean useAgent, ClassLoader... classLoaders) throws IOException, InterruptedException {
         super(useAgent, true, classLoaders);
@@ -70,7 +76,7 @@ public class DockerServer extends AbstractServer {
     }
 
     @Override
-    public void exit() {
+    public void terminate() {
         try {
             try {
                 dockerClient.stopContainerCmd(container.getId()).exec();

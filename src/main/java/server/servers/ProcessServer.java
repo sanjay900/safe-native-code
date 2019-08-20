@@ -10,6 +10,12 @@ import java.nio.file.Paths;
 public class ProcessServer extends AbstractServer {
     private Process process;
 
+    /**
+     * Create a slave that runs inside another process
+     *
+     * @param useAgent     true to use a java agent to capture all classes, false to pass in classloaders below
+     * @param classLoaders a list of classloaders to supply classes to the slave, if useAgent is false
+     */
     public ProcessServer(boolean useAgent, ClassLoader... classLoaders) throws IOException, InterruptedException {
         super(useAgent, true, classLoaders);
         Path javaProcess = Paths.get(System.getProperty("java.home"), "bin", "java");
@@ -20,7 +26,7 @@ public class ProcessServer extends AbstractServer {
     }
 
     @Override
-    public void exit() {
+    public void terminate() {
         try {
             process.destroyForcibly().waitFor();
         } catch (InterruptedException e) {

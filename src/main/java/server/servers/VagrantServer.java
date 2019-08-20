@@ -10,6 +10,12 @@ import java.nio.file.Path;
 public class VagrantServer extends AbstractServer {
     private Path temp = Files.createTempDirectory("safeNativeCode-VM-");
 
+    /**
+     * Create a slave that runs inside a vagrant virtual machine
+     *
+     * @param useAgent     true to use a java agent to capture all classes, false to pass in classloaders below
+     * @param classLoaders a list of classloaders to supply classes to the slave, if useAgent is false
+     */
     public VagrantServer(boolean useAgent, ClassLoader... classLoaders) throws IOException, InterruptedException {
         super(useAgent, true, classLoaders);
         //Create a vagrant config based on a template
@@ -32,7 +38,7 @@ public class VagrantServer extends AbstractServer {
     }
 
     @Override
-    public void exit() {
+    public void terminate() {
         //If a cleanup has already happened, its safe to assume the process is dead.
         if (!temp.toFile().exists()) return;
         try {

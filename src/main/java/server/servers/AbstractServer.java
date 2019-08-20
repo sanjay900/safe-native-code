@@ -39,8 +39,9 @@ abstract class AbstractServer implements Server {
     /**
      * Create a slave that runs in another process somewhere
      *
-     * @param useAgent     true to use a java agent to capture all classes, false to pass in classloaders below
-     * @param classLoaders a list of classloads to supply classes to the slave, if useAgent is false
+     * @param useShutdownHook true if this server should register a hook to automatically handle cleanup
+     * @param useAgent        true to use a java agent to capture all classes, false to pass in classloaders below
+     * @param classLoaders    a list of classloaders to supply classes to the slave, if useAgent is false
      */
     AbstractServer(boolean useAgent, boolean useShutdownHook, ClassLoader... classLoaders) throws IOException {
         this.addShutdownHooks = useShutdownHook;
@@ -50,7 +51,7 @@ abstract class AbstractServer implements Server {
         this.lookupPort = findAvailablePort();
         this.useAgent = useAgent;
         if (useShutdownHook) {
-            Runtime.getRuntime().addShutdownHook(new Thread(this::exit));
+            Runtime.getRuntime().addShutdownHook(new Thread(this::terminate));
         }
     }
 
@@ -100,16 +101,16 @@ abstract class AbstractServer implements Server {
 
         while (true) {
             try {
-                Retriever br = new Retriever(lookupPort, classLoaders);
-                registry.rebind("bytecodeLookup", br);
+                Retriever retriever = new Retriever(lookupPort, classLoaders);
+                registry.rebind("bytecodeLookup", retriever);
                 if (addShutdownHooks) {
                     //Start a thread that monitors the remote process, and frees up the retrievers ports when it is completed.
                     new Thread(() -> {
                         try {
                             this.waitForExit();
-                            UnicastRemoteObject.unexportObject(br, true);
-                        } catch (InterruptedException | IOException ignored) {
-
+                            UnicastRemoteObject.unexportObject(retriever, true);
+                        } catch (InterruptedException | IOException ex) {
+                            throw new RuntimeException(ex);
                         }
                     }).start();
                 }

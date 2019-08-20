@@ -12,7 +12,9 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
 /**
- * A class that retrieves bytecode from a specific set of ClassLoaders or BytecodeAgent
+ * A class that retrieves data from a server, and hands it to the client
+ * it retrieves bytecode from a specific set of ClassLoaders or BytecodeAgent
+ * and it handles proxying system.out
  */
 public class Retriever extends UnicastRemoteObject implements shared.Retriever {
     private transient ClassLoader[] classLoaders;
@@ -44,6 +46,7 @@ public class Retriever extends UnicastRemoteObject implements shared.Retriever {
         return null;
     }
 
+    // It is entirely possible that a direct server may attempt to override System.out, so lets store a static instance here.
     private static PrintStream out = System.out;
     private static PrintStream err = System.err;
     public void printOut(int i) {

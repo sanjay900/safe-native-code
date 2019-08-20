@@ -2,7 +2,7 @@ package slave;
 
 import shared.IncorrectSlaveException;
 import shared.RemoteObject;
-import shared.SlaveAPI;
+import shared.SharedAPI;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -10,7 +10,7 @@ import java.rmi.RemoteException;
 /**
  * Slave is the remote api used by RemoteObject for interfacing with a remote object.
  */
-public interface Slave extends SlaveAPI, Remote {
+public interface Slave extends SharedAPI, Remote {
 
     <T> T get(RemoteObject<T> obj) throws RemoteException, IncorrectSlaveException;
 }
