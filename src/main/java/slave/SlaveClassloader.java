@@ -24,13 +24,15 @@ public class SlaveClassloader extends SecureClassLoader {
         // We need to make sure the slave main and slave object are loaded using the correct classloader.
         // This is due to the fact that anything executed from the slave will use the parent's classloader.
         // And we need everything to go through this class loader, so that we can proxy calls to the main jvm when required.
-        if (name.endsWith("slave.SlaveMain") || name.endsWith("slave.SlaveMain$1") || name.endsWith("slave.SlaveMain$2") || name.endsWith("slave.SlaveObject")) {
+        if (name.endsWith("slave.SlaveClient") || name.endsWith("slave.SlaveClient$1") || name.endsWith("slave.SlaveClient$2") || name.endsWith("slave.SlaveObject")) {
             // Essentially, we just reload these specific classes using this classloader instead of the app classloader.
+            String className = name.replace(".","/")+".class";
             try {
-                byte[] b = IOUtils.toByteArray(getResourceAsStream(name.replace(".","/")+".class"));
+                byte[] b = IOUtils.toByteArray(getResourceAsStream(className));
                 return super.defineClass(name, b, 0, b.length);
             } catch (IOException e) {
                 e.printStackTrace();
+                return null;
             }
         }
         // If we don't have a reference to the main JVM yet, it's too early to need to proxy classes through it.

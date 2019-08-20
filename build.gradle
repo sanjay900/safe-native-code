@@ -42,7 +42,6 @@ shadowJar {
                 'Add-Opens': 'java.rmi/sun.rmi.registry'
         )
     }
-    minimize()
     from sourceSets.main.allSource
 }
 tasks.test.dependsOn tasks.shadowJar

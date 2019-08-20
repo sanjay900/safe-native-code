@@ -59,7 +59,7 @@ abstract class ProcessBasedServer implements Server {
     String[] getJavaCommandArgs(String javaCommand, boolean jarWithPath, boolean isVagrant) {
         List<String> args = new ArrayList<>();
         args.add(javaCommand);
-        args.add("-Djava.system.class.loader=slave.SlaveClassloader");
+//        args.add("-Djava.system.class.loader=slave.SlaveClassloader");
         //Give us the ability to reflect into rmi so we can use it on VMs
         //On Java 9+, we need to explicitly grant ourselves access to the rmi module
         if (Integer.parseInt(System.getProperty("java.version").split("\\.")[0]) >= 9) {
