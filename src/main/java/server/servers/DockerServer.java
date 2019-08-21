@@ -14,6 +14,10 @@ import com.github.dockerjava.core.command.WaitContainerResultCallback;
 
 import java.io.IOException;
 import java.net.SocketException;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A Docker Server runs a slave inside a docker container.
@@ -23,12 +27,23 @@ public class DockerServer extends AbstractServer {
     private CreateContainerResponse container;
 
     /**
+     * Create a slave that runs inside a docker container, only sharing required folders for execution.
+     *
+     * @param classLoaders a list of classloaders to supply classes to the slave
+     */
+    public DockerServer(ClassLoader... classLoaders) throws IOException, InterruptedException {
+        this(Collections.emptyList(), classLoaders);
+    }
+
+    /**
      * Create a slave that runs inside a docker container
      *
-     * @param classLoaders a list of classloaders to supply classes to the slave, if useAgent is false
+     * @param pathsToShare a list of directories to share with the container, the folder containing the jar is automatically shared.
+     *                     Paths are mounted at /shared/path
+     * @param classLoaders a list of classloaders to supply classes to the slave
      */
     @SuppressWarnings("deprecation")
-    public DockerServer(ClassLoader... classLoaders) throws IOException, InterruptedException {
+    public DockerServer(List<Path> pathsToShare, ClassLoader... classLoaders) throws IOException, InterruptedException {
         super(true, classLoaders);
         try {
             //Start a docker container based on our openjdk 12 image.
@@ -45,9 +60,15 @@ public class DockerServer extends AbstractServer {
             };
             dockerClient.pullImageCmd("openjdk").withTag("12").exec(cb);
             cb.awaitCompletion();
+            List<Bind> binds = new ArrayList<>();
+            binds.add(new Bind(getJar().toPath().toAbsolutePath().getParent().toString(), new Volume("/safeNativeCode")));
+            pathsToShare.forEach(path -> {
+                String p = path.toAbsolutePath().toString();
+                binds.add(new Bind(p, new Volume("/shared/" + p)));
+            });
             //Share the folder containing the jar with the container.
             container = dockerClient.createContainerCmd("openjdk:12")
-                    .withBinds(new Bind(getJar().toPath().toAbsolutePath().getParent().toString(), new Volume("/safeNativeCode")))
+                    .withBinds(binds.toArray(new Bind[0]))
                     .withWorkingDir("/safeNativeCode")
                     .withCmd(getJavaCommandArgs("java", false))
                     .withNetworkMode("host")
