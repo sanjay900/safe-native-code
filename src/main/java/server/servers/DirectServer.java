@@ -14,13 +14,12 @@ public class DirectServer extends AbstractServer {
     /**
      * Create a slave that runs inside this process
      *
-     * @param useAgent     true to use a java agent to capture all classes, false to pass in classloaders below
      * @param classLoaders a list of classloaders to supply classes to the slave, if useAgent is false
      */
-    public DirectServer(boolean useAgent, ClassLoader... classLoaders) throws IOException, InterruptedException {
-        super(useAgent, false, classLoaders);
+    public DirectServer(ClassLoader... classLoaders) throws IOException, InterruptedException {
+        super(false, classLoaders);
         //At this point, we are pretending to be a slave. Start the slave components in another thread.
-        Thread slaveInitThread = new Thread(() -> SlaveMain.constructSlave(getSlaveArgs(false)));
+        Thread slaveInitThread = new Thread(() -> SlaveMain.constructSlave(getSlaveArgs()));
         slaveInitThread.start();
         //Now set up the registry, knowing that it is being created above in another thread
         setupRegistry();

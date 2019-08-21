@@ -5,14 +5,14 @@ import shared.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.lang.reflect.Field;
-import java.net.InetAddress;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * SlaveClient is the Main class run by a slave
@@ -21,21 +21,8 @@ public class SlaveClient extends UnicastRemoteObject implements Slave {
 
     private transient Map<SlaveObject, Object> localObjects = new HashMap<>();
 
-    @SuppressWarnings("unchecked")
-    public SlaveClient(int registryPort, int slavePort, int lookupPort, boolean isVagrant) throws IOException, InterruptedException, ClassNotFoundException, IllegalAccessException, NoSuchFieldException, NotBoundException {
-        super(slavePort);
-
+    public SlaveClient(int registryPort) throws IOException, InterruptedException, NotBoundException {
         Registry registry = LocateRegistry.createRegistry(registryPort);
-        if (isVagrant) {
-            //For vagrant, requests don't come from localhost, and instead come from 10.0.2.2.
-            //RMI isn't supposed to be used this way, but we can abuse the fact that RMI stores a cache of allowed addresses in order to make things work.
-            Field f = Class.forName("sun.rmi.registry.RegistryImpl").getDeclaredField("allowedAccessCache");
-            f.setAccessible(true);
-            InetAddress host = InetAddress.getByName("10.0.2.2");
-            ((Hashtable) f.get(null)).put(host, host);
-            //For vagrant, we have to proxy back the requests for bytecodeLookup back to the host, as the host isn't localhost.
-            new ProcessBuilder("socat", "tcp-l:" + lookupPort + ",fork,reuseaddr", "tcp:10.0.2.2:" + lookupPort).inheritIO().start();
-        }
 
         while (!Arrays.asList(registry.list()).contains("bytecodeLookup")) {
             Thread.sleep(10);

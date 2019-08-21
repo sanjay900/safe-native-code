@@ -25,12 +25,11 @@ public class DockerServer extends AbstractServer {
     /**
      * Create a slave that runs inside a docker container
      *
-     * @param useAgent     true to use a java agent to capture all classes, false to pass in classloaders below
      * @param classLoaders a list of classloaders to supply classes to the slave, if useAgent is false
      */
     @SuppressWarnings("deprecation")
-    public DockerServer(boolean useAgent, ClassLoader... classLoaders) throws IOException, InterruptedException {
-        super(useAgent, true, classLoaders);
+    public DockerServer(ClassLoader... classLoaders) throws IOException, InterruptedException {
+        super(true, classLoaders);
         try {
             //Start a docker container based on our openjdk 12 image.
             DockerClientConfig config = DefaultDockerClientConfig.
@@ -50,7 +49,7 @@ public class DockerServer extends AbstractServer {
             container = dockerClient.createContainerCmd("openjdk:12")
                     .withBinds(new Bind(getJar().toPath().toAbsolutePath().getParent().toString(), new Volume("/safeNativeCode")))
                     .withWorkingDir("/safeNativeCode")
-                    .withCmd(getJavaCommandArgs("java", false, false))
+                    .withCmd(getJavaCommandArgs("java", false))
                     .withNetworkMode("host")
                     .exec();
             dockerClient.startContainerCmd(container.getId()).exec();

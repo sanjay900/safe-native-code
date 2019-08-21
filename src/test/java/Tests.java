@@ -3,7 +3,10 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import server.SafeCodeLibrary;
-import server.servers.*;
+import server.servers.DirectServer;
+import server.servers.DockerServer;
+import server.servers.ProcessServer;
+import server.servers.Server;
 import shared.IncorrectSlaveException;
 import shared.RemoteObject;
 
@@ -32,8 +35,8 @@ public class Tests {
     @BeforeClass
     public static void init() throws InterruptedException, IOException {
         SafeCodeLibrary.secure();
-        first = new ProcessServer(false, JavaCompiler.getClassLoader());
-        second = new ProcessServer(false, JavaCompiler.getClassLoader());
+        first = new ProcessServer(JavaCompiler.getClassLoader());
+        second = new ProcessServer(JavaCompiler.getClassLoader());
     }
 
     @Test
@@ -125,7 +128,7 @@ public class Tests {
         for (Class<? extends Server> clazz : backendsClasses) {
             System.out.println("Constructing " + clazz.getName());
             Instant start = Instant.now();
-            servers.add(clazz.getDeclaredConstructor(boolean.class, ClassLoader[].class).newInstance(false, loaders));
+            servers.add(clazz.getDeclaredConstructor(ClassLoader[].class).newInstance((Object)loaders));
             Instant end = Instant.now();
             System.out.println("Time taken to start " + clazz.getName() + ": " + Duration.between(start, end).toMillis());
         }
@@ -180,7 +183,7 @@ public class Tests {
                 "public class Test {" +
                         "public String getData() {return \"test\";}" +
                         "}", "Test");
-        Assert.assertEquals("test", new DirectServer(false, JavaCompiler.getClassLoader()).call(() -> {
+        Assert.assertEquals("test", new DirectServer(JavaCompiler.getClassLoader()).call(() -> {
             try {
                 assert clazz != null;
                 return clazz.newInstance();
@@ -202,8 +205,8 @@ public class Tests {
     public void TestStopping() throws Exception {
         System.out.println("Constructing servers");
         Server[] servers = new Server[]{
-                new ProcessServer(false, JavaCompiler.getClassLoader()),
-                new DockerServer(false, JavaCompiler.getClassLoader()),
+                new ProcessServer(JavaCompiler.getClassLoader()),
+                new DockerServer(JavaCompiler.getClassLoader()),
         };
 
         for (Server server : servers) {
@@ -219,8 +222,8 @@ public class Tests {
     public void TestCrashing() throws Exception {
         System.out.println("Constructing servers");
         Server[] servers = new Server[]{
-                new ProcessServer(false, JavaCompiler.getClassLoader()),
-                new DockerServer(false, JavaCompiler.getClassLoader()),
+                new ProcessServer(JavaCompiler.getClassLoader()),
+                new DockerServer(JavaCompiler.getClassLoader()),
         };
 
         //Simulate a process crash with System.terminate
@@ -243,8 +246,8 @@ public class Tests {
     public void TestKilling() throws Exception {
         System.out.println("Constructing servers");
         Server[] servers = new Server[]{
-                new ProcessServer(false, JavaCompiler.getClassLoader()),
-                new DockerServer(false, JavaCompiler.getClassLoader()),
+                new ProcessServer(JavaCompiler.getClassLoader()),
+                new DockerServer(JavaCompiler.getClassLoader()),
         };
 
         for (Server server : servers) {
@@ -265,25 +268,6 @@ public class Tests {
                         "public String getData() {return \"test\";}" +
                         "}", "Test");
         Assert.assertEquals("test", first.call(() -> {
-            try {
-                assert clazz != null;
-                return clazz.newInstance();
-            } catch (InstantiationException | IllegalAccessException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }).get());
-    }
-
-    @Test(expected = UnmarshalException.class)
-    @SuppressWarnings("deprecation")
-    public void TestAgent() throws Exception {
-
-        Class<?> clazz = JavaCompiler.compile(
-                "public class Test implements java.io.Serializable {" +
-                        "public String getData() {return \"test\";}" +
-                        "}", "Test");
-        Assert.assertEquals("test", new DirectServer(true).call(() -> {
             try {
                 assert clazz != null;
                 return clazz.newInstance();

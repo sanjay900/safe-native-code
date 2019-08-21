@@ -28,27 +28,20 @@ import java.util.List;
  */
 abstract class AbstractServer implements Server {
     private Slave slave;
-    int registryPort;
-    int slavePort;
-    private int lookupPort;
+    private int registryPort;
     private ClassLoader[] classLoaders;
-    private boolean useAgent;
     private boolean addShutdownHooks;
 
     /**
      * Create a slave that runs in another process somewhere
      *
      * @param useShutdownHook true if this server should register a hook to automatically handle cleanup
-     * @param useAgent        true to use a java agent to capture all classes, false to pass in classloaders below
      * @param classLoaders    a list of classloaders to supply classes to the slave, if useAgent is false
      */
-    AbstractServer(boolean useAgent, boolean useShutdownHook, ClassLoader... classLoaders) throws IOException {
+    AbstractServer(boolean useShutdownHook, ClassLoader... classLoaders) throws IOException {
         this.addShutdownHooks = useShutdownHook;
         this.classLoaders = classLoaders;
         this.registryPort = findAvailablePort();
-        this.slavePort = findAvailablePort();
-        this.lookupPort = findAvailablePort();
-        this.useAgent = useAgent;
         if (useShutdownHook) {
             Runtime.getRuntime().addShutdownHook(new Thread(this::terminate));
         }
@@ -62,20 +55,15 @@ abstract class AbstractServer implements Server {
         return ss.getLocalPort();
     }
 
-    String[] getSlaveArgs(boolean isVagrant) {
-        return new String[]{registryPort + "", slavePort + "", lookupPort + "", isVagrant + ""};
+    String[] getSlaveArgs() {
+        return new String[]{registryPort + ""};
     }
 
-    String[] getJavaCommandArgs(String javaCommand, boolean jarWithPath, boolean isVagrant) {
+    String[] getJavaCommandArgs(String javaCommand, boolean jarWithPath) {
         List<String> args = new ArrayList<>();
         args.add(javaCommand);
-        //Give us the ability to reflect into rmi so we can use it on VMs
-        //On Java 9+, we need to explicitly grant ourselves access to the rmi module
-        if (Integer.parseInt(System.getProperty("java.version").split("\\.")[0]) >= 9) {
-            args.addAll(Arrays.asList("--add-opens", "java.rmi/sun.rmi.registry=ALL-UNNAMED"));
-        }
         args.addAll(Arrays.asList("-cp", jarWithPath ? getJar().getAbsolutePath() : getJar().getName(), SlaveMain.class.getName()));
-        args.addAll(Arrays.asList(getSlaveArgs(isVagrant)));
+        args.addAll(Arrays.asList(getSlaveArgs()));
         return args.toArray(new String[0]);
     }
 
@@ -93,7 +81,7 @@ abstract class AbstractServer implements Server {
 
     void setupRegistry() throws RemoteException, InterruptedException {
         Registry registry = LocateRegistry.getRegistry(registryPort);
-        Supplier retriever = new Supplier(lookupPort, useAgent, classLoaders);
+        Supplier retriever = new Supplier(classLoaders);
         while (true) {
             try {
                 registry.rebind("bytecodeLookup", retriever);

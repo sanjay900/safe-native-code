@@ -11,13 +11,8 @@ public class SlaveMain {
     public static void constructSlave(String[] args) {
         try {
             new SlaveClassloader(Thread.currentThread().getContextClassLoader()).loadClass("slave.SlaveClient")
-                    .getDeclaredConstructor(int.class, int.class, int.class, boolean.class)
-                    .newInstance(
-                            Integer.parseInt(args[args.length - 4]),
-                            Integer.parseInt(args[args.length - 3]),
-                            Integer.parseInt(args[args.length - 2]),
-                            args[args.length - 1].equals("true")
-                    );
+                    .getDeclaredConstructor(int.class)
+                    .newInstance(Integer.parseInt(args[args.length - 1]));
         } catch (ClassNotFoundException | IllegalAccessException | NoSuchMethodException | InvocationTargetException | InstantiationException ex) {
             throw new RuntimeException(ex);
         }
