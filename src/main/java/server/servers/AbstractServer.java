@@ -1,6 +1,5 @@
 package server.servers;
 
-import net.bytebuddy.agent.ByteBuddyAgent;
 import org.apache.commons.io.FilenameUtils;
 import server.Supplier;
 import shared.RemoteObject;
@@ -94,28 +93,24 @@ abstract class AbstractServer implements Server {
 
     void setupRegistry() throws RemoteException, InterruptedException {
         Registry registry = LocateRegistry.getRegistry(registryPort);
-        if (useAgent) {
-            ByteBuddyAgent.attach(getJar(), ByteBuddyAgent.ProcessProvider.ForCurrentVm.INSTANCE, registryPort + " " + lookupPort);
-        } else {
-            while (true) {
-                try {
-                    Supplier retriever = new Supplier(lookupPort, classLoaders);
-                    registry.rebind("bytecodeLookup", retriever);
-                    if (addShutdownHooks) {
-                        //Start a thread that monitors the remote process, and frees up the retrievers ports when it is completed.
-                        new Thread(() -> {
-                            try {
-                                this.waitForExit();
-                                UnicastRemoteObject.unexportObject(retriever, true);
-                            } catch (InterruptedException | IOException ex) {
-                                throw new RuntimeException(ex);
-                            }
-                        }).start();
-                    }
-                    break;
-                } catch (RemoteException e) {
-                    Thread.sleep(10);
+        Supplier retriever = new Supplier(lookupPort, useAgent, classLoaders);
+        while (true) {
+            try {
+                registry.rebind("bytecodeLookup", retriever);
+                if (addShutdownHooks) {
+                    //Start a thread that monitors the remote process, and frees up the retrievers ports when it is completed.
+                    new Thread(() -> {
+                        try {
+                            this.waitForExit();
+                            UnicastRemoteObject.unexportObject(retriever, true);
+                        } catch (InterruptedException | IOException ex) {
+                            throw new RuntimeException(ex);
+                        }
+                    }).start();
                 }
+                break;
+            } catch (RemoteException e) {
+                Thread.sleep(10);
             }
         }
 

@@ -120,7 +120,6 @@ public class Tests {
         backendsClasses.add(DirectServer.class);
         backendsClasses.add(ProcessServer.class);
         backendsClasses.add(DockerServer.class);
-        backendsClasses.add(VagrantServer.class);
         List<Server> servers = new ArrayList<>();
         ClassLoader[] loaders = new ClassLoader[]{JavaCompiler.getClassLoader()};
         for (Class<? extends Server> clazz : backendsClasses) {
@@ -205,7 +204,6 @@ public class Tests {
         Server[] servers = new Server[]{
                 new ProcessServer(false, JavaCompiler.getClassLoader()),
                 new DockerServer(false, JavaCompiler.getClassLoader()),
-                new VagrantServer(false, JavaCompiler.getClassLoader()),
         };
 
         for (Server server : servers) {
@@ -223,7 +221,6 @@ public class Tests {
         Server[] servers = new Server[]{
                 new ProcessServer(false, JavaCompiler.getClassLoader()),
                 new DockerServer(false, JavaCompiler.getClassLoader()),
-                new VagrantServer(false, JavaCompiler.getClassLoader()),
         };
 
         //Simulate a process crash with System.terminate
@@ -248,7 +245,6 @@ public class Tests {
         Server[] servers = new Server[]{
                 new ProcessServer(false, JavaCompiler.getClassLoader()),
                 new DockerServer(false, JavaCompiler.getClassLoader()),
-                new VagrantServer(false, JavaCompiler.getClassLoader()),
         };
 
         for (Server server : servers) {

@@ -1,9 +1,0 @@
-Vagrant.configure("2") do |config|
-  config.vm.box = "sanjay900/jdk-12"
-  config.vm.network "forwarded_port", guest: <registryPort>, host: <registryPort>
-  config.vm.network "forwarded_port", guest: <slavePort>, host: <slavePort>
-  config.vm.provision "file", source: "<source>", destination: "safeNativeCode.jar"
-  # The nohup is used so that we finish the provisioning while the process runs in the background.
-  # the forceful poweroff is used as a way to immediately shut down the vm without syncing files or anything, to save time as the vm gets destroyed.
-  config.vm.provision :shell, inline: "nohup sh -c '<javaCommand> || true;sudo systemctl --force --force poweroff' 0<&- &>out.log &", run: 'always'
-end

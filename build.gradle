@@ -13,13 +13,9 @@ repositories {
 }
 
 dependencies {
-    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.9'
     testCompile group: 'junit', name: 'junit', version: '4.12'
-    compile group: 'org.ow2.asm', name: 'asm', version: '7.2-beta'
-    compile "com.sparkjava:spark-core:2.9.1"
     compile group: 'commons-io', name: 'commons-io', version: '2.6'
     compile group: 'net.bytebuddy', name: 'byte-buddy-agent', version: '1.9.15'
-    compile group: 'uk.com.robust-it', name: 'cloning', version: '1.9.12'
     compile group: 'com.github.docker-java', name: 'docker-java', version: '3.1.5'
     compile group: 'javax.activation', name: 'activation', version: '1.1.1'
     compile 'org.slf4j:slf4j-nop:1.7.25'
@@ -33,13 +29,7 @@ shadowJar {
     version = null
     manifest {
         attributes(
-                'Agent-Class': 'server.BytecodeAgent',
-                'Can-Redefine-Classes': 'true',
-                'Can-Retransform-Classes': 'true',
-                'Can-Set-Native-Method-Prefix': 'true',
-                'Implementation-Title': "BytecodeServerAgent",
-                'Implementation-Version': rootProject.version,
-                'Add-Opens': 'java.rmi/sun.rmi.registry'
+            'Add-Opens': 'java.rmi/sun.rmi.registry'
         )
     }
     from sourceSets.main.allSource
