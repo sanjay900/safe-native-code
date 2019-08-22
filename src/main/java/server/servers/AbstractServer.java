@@ -1,18 +1,13 @@
 package server.servers;
 
 import server.Supplier;
-import shared.RemoteObject;
-import shared.SerializableConsumer;
-import shared.SerializableRunnable;
-import shared.SerializableSupplier;
-import shared.Slave;
+import shared.*;
 import slave.SlaveMain;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
-import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -21,6 +16,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * A AbstractServer is used when we have a server that executes code in a slave process somewhere.
@@ -58,24 +54,21 @@ abstract class AbstractServer implements Server {
         return new String[]{registryPort + ""};
     }
 
-    String[] getJavaCommandArgs(String javaCommand, boolean jarWithPath) {
+    String[] getJavaCommandArgs(String javaCommand, String libLocation) {
         List<String> args = new ArrayList<>();
         args.add(javaCommand);
-        args.addAll(Arrays.asList("-cp", jarWithPath ? getJar().getAbsolutePath() : getJar().getName(), SlaveMain.class.getName()));
+        args.add("-cp");
+        args.add(Arrays.stream(getClassPath()).map(path -> libLocation + "/" + path).collect(Collectors.joining(":")));
+        args.add(SlaveMain.class.getName());
         args.addAll(Arrays.asList(getSlaveArgs()));
         return args.toArray(new String[0]);
     }
 
-    static File getJar() {
-        try {
-            File jar = new File(AbstractServer.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-            if (jar.getName().endsWith(".jar")) {
-                return jar;
-            }
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-        return new File("build/libs/safeNativeCode.jar");
+    static String[] getClassPath() {
+        return Arrays
+                .stream(System.getProperty("java.class.path").split(":"))
+                .map(path -> Paths.get(path).toAbsolutePath().toString())
+                .toArray(String[]::new);
     }
 
     void setupRegistry() throws RemoteException, InterruptedException {

@@ -18,7 +18,7 @@ public class ProcessServer extends AbstractServer {
     public ProcessServer(ClassLoader... classLoaders) throws IOException, InterruptedException {
         super(true, classLoaders);
         Path javaProcess = Paths.get(System.getProperty("java.home"), "bin", "java");
-        process = new ProcessBuilder(getJavaCommandArgs(javaProcess.toString(), true)).inheritIO().start();
+        process = new ProcessBuilder(getJavaCommandArgs(javaProcess.toString(), "")).inheritIO().start();
         //End the remoteSlave process if the parent process ends.
         Runtime.getRuntime().addShutdownHook(new Thread(process::destroy));
         setupRegistry();

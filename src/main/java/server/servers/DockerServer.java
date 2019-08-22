@@ -28,22 +28,23 @@ public class DockerServer extends AbstractServer {
     /**
      * Create a slave that runs inside a docker container
      *
-     * @param pathsToShare a list of directories to share with the container, the folder containing the jar is automatically shared.
+     * @param pathsToShare a list of directories to share with the container. All jars on the classpath are automatically shared.
      *                     Paths are mounted at /shared/path
      * @param classLoaders a list of classloaders to supply classes to the slave
      */
     public DockerServer(List<Path> pathsToShare, ClassLoader... classLoaders) throws IOException, InterruptedException {
         super(true, classLoaders);
 
-        List<String> args = new ArrayList<>();
-        args.addAll(Arrays.asList("docker", "create", "--rm", "--network", "host", "--workdir", "/safeNativeCode"));
-        args.addAll(Arrays.asList("-v", getJar().toPath().toAbsolutePath().getParent().toString() + ":/safeNativeCode"));
+        List<String> args = new ArrayList<>(Arrays.asList("docker", "create", "--rm", "--network", "host"));
+        for (String cp : getClassPath()) {
+            args.addAll(Arrays.asList("-v", cp + ":/safeNativeCode/" + cp));
+        }
         pathsToShare.forEach(path -> {
             String p = path.toAbsolutePath().toString();
             args.addAll(Arrays.asList("-v", p + ":/shared/" + p));
         });
         args.add("openjdk:12");
-        args.addAll(Arrays.asList(getJavaCommandArgs("java", false)));
+        args.addAll(Arrays.asList(getJavaCommandArgs("java", "/safeNativeCode/")));
         Process process = new ProcessBuilder(args).start();
         process.waitFor();
         containerID = new BufferedReader(new InputStreamReader(process.getInputStream())).readLine();

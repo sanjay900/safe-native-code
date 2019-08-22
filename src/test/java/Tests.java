@@ -128,7 +128,7 @@ public class Tests {
         for (Class<? extends Server> clazz : backendsClasses) {
             System.out.println("Constructing " + clazz.getName());
             Instant start = Instant.now();
-            servers.add(clazz.getDeclaredConstructor(ClassLoader[].class).newInstance((Object)loaders));
+            servers.add(clazz.getDeclaredConstructor(ClassLoader[].class).newInstance((Object) loaders));
             Instant end = Instant.now();
             System.out.println("Time taken to start " + clazz.getName() + ": " + Duration.between(start, end).toMillis());
         }
@@ -152,53 +152,35 @@ public class Tests {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     public void TestDynamicCompilation() throws Exception {
+        Server[] servers = new Server[]{
+                new DirectServer(JavaCompiler.getClassLoader()),
+                first,
+                new DockerServer(JavaCompiler.getClassLoader()),
+        };
         Class<?> clazz = JavaCompiler.compile(
                 "public class Test {" +
                         "public String getData() {return \"test\";}" +
                         "}", "Test");
-        Assert.assertEquals("test", first.call(() -> {
-            try {
-                assert clazz != null;
-                return clazz.newInstance();
-            } catch (InstantiationException | IllegalAccessException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }).call(s -> {
-            try {
-                return s.getClass().getDeclaredMethod("getData").invoke(s);
-            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }).get());
-    }
-
-    @Test
-    @SuppressWarnings("deprecation")
-    public void TestDynamicCompilationDirect() throws Exception {
-        Class<?> clazz = JavaCompiler.compile(
-                "public class Test {" +
-                        "public String getData() {return \"test\";}" +
-                        "}", "Test");
-        Assert.assertEquals("test", new DirectServer(JavaCompiler.getClassLoader()).call(() -> {
-            try {
-                assert clazz != null;
-                return clazz.newInstance();
-            } catch (InstantiationException | IllegalAccessException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }).call(s -> {
-            try {
-                return s.getClass().getDeclaredMethod("getData").invoke(s);
-            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }).get());
+        for (Server server : servers) {
+            System.out.println(server.getClass().getName());
+            Assert.assertEquals("test", server.call(() -> {
+                try {
+                    assert clazz != null;
+                    return clazz.getDeclaredConstructor().newInstance();
+                } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }).call(s -> {
+                try {
+                    return s.getClass().getDeclaredMethod("getData").invoke(s);
+                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }).get());
+        }
     }
 
     @Test

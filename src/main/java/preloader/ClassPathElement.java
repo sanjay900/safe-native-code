@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Enumeration;
+import java.util.function.Consumer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Pattern;
@@ -22,14 +23,14 @@ class ClassPathElement {
         }
     }
 
-    void handle(ClassPathCollector collector) {
+    void handle(Consumer<ClassFile> consumer) {
         if (JARFILE.matcher(path.toString().trim()).matches()) {
             try (JarFile jar = new JarFile(new File(path))) {
                 Enumeration<JarEntry> files = jar.entries();
                 while (files.hasMoreElements()) {
                     JarEntry jarEntry = files.nextElement();
                     String name = jarEntry.getName().trim();
-                    handleClasspathFile(collector, name);
+                    handleClasspathFile(consumer, name);
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -37,29 +38,31 @@ class ClassPathElement {
         } else {
             //plain file or a directory
             File file = new File(path);
-            handleFile(collector, file, true, null);
+            handleFile(consumer, file, true, null);
         }
     }
 
-    private void handleFile(ClassPathCollector visitor, File file, boolean isTop, String path) {
+    private void handleFile(Consumer<ClassFile> consumer, File file, boolean isTop, String path) {
         String name = file.getName().trim();
         String newPath = isTop ? null : path == null ? name : path + "/" + name;
         if (file.isDirectory()) {
             File[] files = file.listFiles();
-            for (File f : files) {
-                handleFile(visitor, f, false, newPath);
+            if (files != null) {
+                for (File f : files) {
+                    handleFile(consumer, f, false, newPath);
+                }
             }
-        } else if (newPath != null){
-            handleClasspathFile(visitor, newPath);
+        } else if (newPath != null) {
+            handleClasspathFile(consumer, newPath);
         }
     }
 
-    private void handleClasspathFile(ClassPathCollector visitor, String fileName) {
+    private void handleClasspathFile(Consumer<ClassFile> consumer, String fileName) {
         if (fileName.endsWith(".class")) {
             if (fileName.equals("module-info.class") || fileName.startsWith("META-INF")) {
                 return;
             }
-            visitor.collect(new ClassFile(fileName));
+            consumer.accept(new ClassFile(fileName));
         }
     }
 }

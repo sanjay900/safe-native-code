@@ -3,7 +3,6 @@ package server.servers;
 import slave.SlaveMain;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * A Direct Server is a server that does absolutely nothing and just runs the code on the same JVM.
@@ -39,8 +38,8 @@ public class DirectServer extends AbstractServer {
     }
 
     @Override
-    public void waitForExit() {
-        //Hopefully, the current JVM never dies, so lets just leave a while loop here in case someone tries to call this.
-        while (true) ;
+    public void waitForExit() throws InterruptedException {
+        //Hopefully, the current JVM never dies, so lets just put this thread to sleep.
+        Thread.currentThread().wait();
     }
 }
