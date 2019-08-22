@@ -1,7 +1,7 @@
 package slave;
 
-import org.apache.commons.io.IOUtils;
 import shared.Retriever;
+import shared.Utils;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -14,7 +14,8 @@ import java.util.Arrays;
 public class SlaveClassloader extends SecureClassLoader {
     private static Retriever lookup;
     //We need a list of prohibited classes, as we do not want to proxy core java classes through our proxy.
-    private String[] prohibited = new String[] {"java.","javax.","com.sun.","sun.","jdk."};
+    private String[] prohibited = new String[]{"java.", "javax.", "com.sun.", "sun.", "jdk."};
+
     SlaveClassloader(ClassLoader parent) {
         super(parent);
     }
@@ -26,9 +27,9 @@ public class SlaveClassloader extends SecureClassLoader {
         // And we need everything to go through this class loader, so that we can proxy calls to the main jvm when required.
         if (name.endsWith("slave.SlaveClient") || name.endsWith("slave.SlaveClient$1") || name.endsWith("slave.SlaveClient$2") || name.endsWith("slave.SlaveObject")) {
             // Essentially, we just reload these specific classes using this classloader instead of the app classloader.
-            String className = name.replace(".","/")+".class";
+            String className = name.replace(".", "/") + ".class";
             try {
-                byte[] b = IOUtils.toByteArray(getResourceAsStream(className));
+                byte[] b = Utils.readStream(getResourceAsStream(className));
                 return super.defineClass(name, b, 0, b.length);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -48,7 +49,7 @@ public class SlaveClassloader extends SecureClassLoader {
             return super.defineClass(name, b, 0, b.length);
         } catch (RemoteException e) {
             // If we loose connection to the main JVM, just throw a class not found exception.
-           throw new ClassNotFoundException("Unable to load: "+name, e);
+            throw new ClassNotFoundException("Unable to load: " + name, e);
         }
     }
 

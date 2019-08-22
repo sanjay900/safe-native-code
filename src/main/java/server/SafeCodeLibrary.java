@@ -1,6 +1,5 @@
 package server;
 
-import org.apache.commons.lang.SystemUtils;
 import preloader.ClassPreloader;
 
 import java.io.IOException;
@@ -12,7 +11,7 @@ import static server.CLibrary.PR_SET_DUMPABLE;
 public class SafeCodeLibrary {
     public static void secure() {
         //Mac is secure by default, and as a result does not have yama or prctl.
-        if (SystemUtils.IS_OS_UNIX && !SystemUtils.IS_OS_MAC_OSX) {
+        if (isUnix() && !isMac()) {
             CLibrary.prctl(PR_SET_DUMPABLE, 0);
             try {
                 int yamaVer = Integer.parseInt(Files.readAllLines(Paths.get("/proc/sys/kernel/yama/ptrace_scope")).get(0));
@@ -28,9 +27,27 @@ public class SafeCodeLibrary {
 
         }
 
-        if (SystemUtils.IS_OS_WINDOWS) {
+        if (isWindows()) {
             System.out.println("You appear to be using windows. We cannot guarantee that windows is secure.");
         }
         new ClassPreloader().preload();
+    }
+
+    private static String OS = System.getProperty("os.name").toLowerCase();
+
+    private static boolean isWindows() {
+        return OS.contains("win");
+    }
+
+    private static boolean isMac() {
+        return OS.contains("mac");
+    }
+
+    private static boolean isUnix() {
+        return (OS.contains("nix") || OS.contains("nux") || OS.contains("aix"));
+    }
+
+    private static boolean isSolaris() {
+        return OS.contains("sunos");
     }
 }

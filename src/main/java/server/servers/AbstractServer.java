@@ -1,6 +1,5 @@
 package server.servers;
 
-import org.apache.commons.io.FilenameUtils;
 import server.Supplier;
 import shared.RemoteObject;
 import shared.SerializableConsumer;
@@ -70,7 +69,7 @@ abstract class AbstractServer implements Server {
     static File getJar() {
         try {
             File jar = new File(AbstractServer.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-            if (FilenameUtils.getExtension(jar.getPath()).equals("jar")) {
+            if (jar.getName().endsWith(".jar")) {
                 return jar;
             }
         } catch (URISyntaxException e) {

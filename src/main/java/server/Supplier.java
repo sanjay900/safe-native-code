@@ -1,8 +1,8 @@
 package server;
 
 
-import org.apache.commons.io.IOUtils;
 import shared.Retriever;
+import shared.Utils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,7 +34,7 @@ public class Supplier extends UnicastRemoteObject implements Retriever {
             InputStream is = loader.getResourceAsStream(clazz.replace(".", "/") + ".class");
             if (is != null) {
                 try {
-                    return IOUtils.toByteArray(is);
+                    return Utils.readStream(is);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

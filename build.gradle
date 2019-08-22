@@ -14,13 +14,7 @@ repositories {
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
-    compile group: 'commons-io', name: 'commons-io', version: '2.6'
-    compile group: 'net.bytebuddy', name: 'byte-buddy-agent', version: '1.9.15'
-    compile group: 'com.github.docker-java', name: 'docker-java', version: '3.1.5'
-    compile group: 'javax.activation', name: 'activation', version: '1.1.1'
-    compile 'org.slf4j:slf4j-nop:1.7.25'
     compile group: 'net.java.dev.jna', name: 'jna', version: '5.4.0'
-    compile("javax.inject:javax.inject:1")
 }
 
 shadowJar {
