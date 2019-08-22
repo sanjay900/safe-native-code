@@ -1,8 +1,4 @@
-package slave;
-
-import shared.IncorrectSlaveException;
-import shared.RemoteObject;
-import shared.SharedAPI;
+package shared;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

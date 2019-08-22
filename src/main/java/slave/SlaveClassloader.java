@@ -48,12 +48,12 @@ public class SlaveClassloader extends SecureClassLoader {
             if (b == null) return super.loadClass(name);
             return super.defineClass(name, b, 0, b.length);
         } catch (RemoteException e) {
-            // If we loose connection to the main JVM, just throw a class not found exception.
+            // If we lose connection to the main JVM, just throw a class not found exception.
             throw new ClassNotFoundException("Unable to load: " + name, e);
         }
     }
 
-    // Due to the fact that this is used across modules (SlaveClassloader and SlaveMain exist inside different ClassLoaders), we need to make it public.
+    // Due to the fact that this is used across modules (SlaveClassloader and SlaveClient exist inside different ClassLoaders), we need to make it public.
     public static void setLookup(Retriever lookup) {
         SlaveClassloader.lookup = lookup;
     }

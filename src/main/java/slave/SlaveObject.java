@@ -3,6 +3,7 @@ package slave;
 import server.servers.Server;
 import shared.RemoteObject;
 import shared.SerializableConsumer;
+import shared.Slave;
 
 import java.rmi.RemoteException;
 import java.util.Objects;

@@ -5,7 +5,7 @@ import shared.RemoteObject;
 import shared.SerializableConsumer;
 import shared.SerializableRunnable;
 import shared.SerializableSupplier;
-import slave.Slave;
+import shared.Slave;
 import slave.SlaveMain;
 
 import java.io.File;
@@ -81,6 +81,7 @@ abstract class AbstractServer implements Server {
     void setupRegistry() throws RemoteException, InterruptedException {
         Registry registry = LocateRegistry.getRegistry(registryPort);
         Supplier retriever = new Supplier(classLoaders);
+        //Try repeatedly until the registry is active.
         while (true) {
             try {
                 registry.rebind("bytecodeLookup", retriever);
@@ -99,11 +100,6 @@ abstract class AbstractServer implements Server {
             } catch (RemoteException e) {
                 Thread.sleep(10);
             }
-        }
-
-
-        while (!Arrays.toString(registry.list()).contains("bytecodeLookup")) {
-            Thread.sleep(10);
         }
         while (true) {
             try {

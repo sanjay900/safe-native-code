@@ -19,7 +19,7 @@ public class DirectServer extends AbstractServer {
     public DirectServer(ClassLoader... classLoaders) throws IOException, InterruptedException {
         super(false, classLoaders);
         //At this point, we are pretending to be a slave. Start the slave components in another thread.
-        Thread slaveInitThread = new Thread(() -> SlaveMain.constructSlave(getSlaveArgs()));
+        Thread slaveInitThread = new Thread(() -> SlaveMain.main(getSlaveArgs()));
         slaveInitThread.start();
         //Now set up the registry, knowing that it is being created above in another thread
         setupRegistry();
