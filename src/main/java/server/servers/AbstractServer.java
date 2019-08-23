@@ -107,7 +107,7 @@ abstract class AbstractServer implements Server {
     private void checkAlive() {
         try {
             if (!isAlive()) {
-                throw new RuntimeException("Error: Slave is not running.");
+                throw new SlaveDeadException(this);
             }
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
