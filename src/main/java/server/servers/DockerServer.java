@@ -49,8 +49,8 @@ public class DockerServer extends AbstractServer {
         args.addAll(Arrays.asList(getJavaCommandArgs("java", "/safeNativeCode/")));
         Process process = new ProcessBuilder(args).start();
         process.waitFor();
-        containerID = new String(Utils.readStream(process.getInputStream()));
-        String error = new String(Utils.readStream(process.getErrorStream()));
+        containerID = new String(Utils.readStream(process.getInputStream())).trim();
+        String error = new String(Utils.readStream(process.getErrorStream())).trim();
         if (!error.isEmpty()) {
             System.out.println("An error occurred while starting docker container:");
             System.out.println(error);
