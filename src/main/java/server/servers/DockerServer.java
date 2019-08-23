@@ -1,5 +1,7 @@
 package server.servers;
 
+import shared.Utils;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -47,13 +49,20 @@ public class DockerServer extends AbstractServer {
         args.addAll(Arrays.asList(getJavaCommandArgs("java", "/safeNativeCode/")));
         Process process = new ProcessBuilder(args).start();
         process.waitFor();
-        containerID = new BufferedReader(new InputStreamReader(process.getInputStream())).readLine();
+        containerID = new String(Utils.readStream(process.getInputStream()));
+        String error = new String(Utils.readStream(process.getErrorStream()));
+        if (!error.isEmpty()) {
+            System.out.println("An error occurred while starting docker container:");
+            System.out.println(error);
+            return;
+        }
         this.process = new ProcessBuilder("docker", "start", "-a", containerID).inheritIO().start();
         setupRegistry();
     }
 
     @Override
     public void terminate() {
+        if (!isAlive()) return;
         try {
             new ProcessBuilder("docker", "stop", containerID).start().waitFor();
             waitForExit();
@@ -69,6 +78,6 @@ public class DockerServer extends AbstractServer {
 
     @Override
     public boolean isAlive() {
-        return process.isAlive();
+        return process != null && process.isAlive();
     }
 }
