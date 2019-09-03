@@ -15,6 +15,7 @@ import java.util.List;
 public class DockerServer extends AbstractServer {
     private Process process;
     private String containerID;
+    private static final String DOCKER_IMAGE = "openjdk:12";
 
     /**
      * Create a slave that runs inside a docker container, only sharing required folders for execution.
@@ -34,7 +35,8 @@ public class DockerServer extends AbstractServer {
      */
     public DockerServer(List<Path> pathsToShare, ClassLoader... classLoaders) throws IOException, InterruptedException {
         super(true, classLoaders);
-
+        //Pull first so we can easily get status
+        new ProcessBuilder("docker", "pull", DOCKER_IMAGE).inheritIO().start().waitFor();
         List<String> args = new ArrayList<>(Arrays.asList("docker", "create", "--rm", "--network", "host"));
         for (String cp : getClassPath()) {
             args.addAll(Arrays.asList("-v", cp + ":/safeNativeCode/" + cp));
@@ -43,7 +45,7 @@ public class DockerServer extends AbstractServer {
             String p = path.toAbsolutePath().toString();
             args.addAll(Arrays.asList("-v", p + ":/shared/" + p));
         });
-        args.add("openjdk:12");
+        args.add(DOCKER_IMAGE);
         args.addAll(Arrays.asList(getJavaCommandArgs("java", "/safeNativeCode/")));
         Process process = new ProcessBuilder(args).start();
         process.waitFor();
