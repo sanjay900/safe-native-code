@@ -1,27 +1,26 @@
-package slave;
+package slaveProcess;
 
-import server.servers.Server;
+import slave.slaves.Slave;
 import shared.RemoteObject;
 import shared.SerializableConsumer;
-import shared.Slave;
 
 import java.rmi.RemoteException;
 import java.util.Objects;
 import java.util.UUID;
 
 /**
- * SlaveObject represents an object on a slave, and exposes an API for interacting with it
+ * SlaveProcessObject represents an object on a slave
  */
-public class SlaveObject<T> implements RemoteObject<T> {
+public class SlaveProcessObject<T> implements RemoteObject<T> {
     private UUID uuid;
-    private Slave slave;
+    private shared.Slave slave;
 
-    SlaveObject(Slave remote) {
+    SlaveProcessObject(shared.Slave remote) {
         this.uuid = UUID.randomUUID();
         this.slave = remote;
     }
 
-    public <R> RemoteObject<R> call(Server.One<R, T> lambda) throws RemoteException {
+    public <R> RemoteObject<R> call(Slave.One<R, T> lambda) throws RemoteException {
         return slave.call(this, lambda);
     }
 
@@ -31,7 +30,7 @@ public class SlaveObject<T> implements RemoteObject<T> {
     }
 
 
-    public RemoteObject<T> copy(Server slave) throws RemoteException {
+    public RemoteObject<T> copy(Slave slave) throws RemoteException {
         return slave.copy(this);
     }
 
@@ -43,7 +42,7 @@ public class SlaveObject<T> implements RemoteObject<T> {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        SlaveObject<?> that = (SlaveObject<?>) o;
+        SlaveProcessObject<?> that = (SlaveProcessObject<?>) o;
         return Objects.equals(uuid, that.uuid);
     }
 

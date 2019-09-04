@@ -1,4 +1,4 @@
-package server;
+package shared;
 
 import preloader.ClassPreloader;
 
@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import static server.CLibrary.PR_SET_DUMPABLE;
+import static shared.CLibrary.PR_SET_DUMPABLE;
 
 public class SafeCodeLibrary {
     public static void secure() {

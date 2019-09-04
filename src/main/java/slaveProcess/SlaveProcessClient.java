@@ -1,10 +1,9 @@
-package slave;
+package slaveProcess;
 
 import shared.*;
+import shared.exceptions.IncorrectSlaveException;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -15,34 +14,21 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * SlaveClient is the Main class run by a slave
+ * SlaveProcessClient is the Main class run by a slave
  */
-public class SlaveClient extends UnicastRemoteObject implements Slave {
+public class SlaveProcessClient extends UnicastRemoteObject implements Slave {
 
-    private transient Map<SlaveObject, Object> localObjects = new HashMap<>();
+    private transient Map<SlaveProcessObject, Object> localObjects = new HashMap<>();
 
-    public SlaveClient(int registryPort) throws IOException, InterruptedException, NotBoundException {
+    public SlaveProcessClient(int registryPort) throws IOException, InterruptedException, NotBoundException {
         Registry registry = LocateRegistry.createRegistry(registryPort);
 
         while (!Arrays.asList(registry.list()).contains("bytecodeLookup")) {
             Thread.sleep(10);
         }
         Retriever r = (Retriever) registry.lookup("bytecodeLookup");
-        SlaveClassloader.setLookup(r);
-        //Redirect output so that printing works.
-        System.setOut(new PrintStream(new OutputStream() {
-            @Override
-            public void write(int b) throws IOException {
-                r.printOut(b);
-            }
-        }));
-        System.setErr(new PrintStream(new OutputStream() {
-            @Override
-            public void write(int b) throws IOException {
-                r.printErr(b);
-            }
-        }));
-        registry.rebind("slave", this);
+        SlaveProcessClassloader.setLookup(r);
+        registry.rebind("slaveProcess", this);
     }
 
     @Override
@@ -112,7 +98,7 @@ public class SlaveClient extends UnicastRemoteObject implements Slave {
 
     @SuppressWarnings("unchecked")
     public <T> T get(RemoteObject<T> obj) throws IncorrectSlaveException {
-        if (!(obj instanceof SlaveObject) || !localObjects.containsKey(obj)) {
+        if (!(obj instanceof SlaveProcessObject) || !localObjects.containsKey(obj)) {
             throw new IncorrectSlaveException();
         }
         return (T) localObjects.get(obj);
@@ -124,7 +110,7 @@ public class SlaveClient extends UnicastRemoteObject implements Slave {
     }
 
     private <T> RemoteObject<T> wrap(T object) {
-        SlaveObject<T> r = new SlaveObject<>(this);
+        SlaveProcessObject<T> r = new SlaveProcessObject<>(this);
         localObjects.put(r, object);
         return r;
     }

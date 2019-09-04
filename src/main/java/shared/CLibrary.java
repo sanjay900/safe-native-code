@@ -1,4 +1,4 @@
-package server;
+package shared;
 
 
 import com.sun.jna.Native;

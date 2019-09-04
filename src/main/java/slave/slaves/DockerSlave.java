@@ -1,4 +1,4 @@
-package server.servers;
+package slave.slaves;
 
 import shared.Utils;
 
@@ -10,9 +10,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * A Docker Server runs a slave inside a docker container.
+ * A Docker Slave runs a slave inside a docker container.
  */
-public class DockerServer extends AbstractServer {
+public class DockerSlave extends AbstractSlave {
     private Process process;
     private String containerID;
     private static final String DOCKER_IMAGE = "openjdk:12";
@@ -22,7 +22,7 @@ public class DockerServer extends AbstractServer {
      *
      * @param classLoaders a list of classloaders to supply classes to the slave
      */
-    public DockerServer(ClassLoader... classLoaders) throws IOException, InterruptedException {
+    public DockerSlave(ClassLoader... classLoaders) throws IOException, InterruptedException {
         this(Collections.emptyList(), classLoaders);
     }
 
@@ -33,7 +33,7 @@ public class DockerServer extends AbstractServer {
      *                     Paths are mounted at /shared/path
      * @param classLoaders a list of classloaders to supply classes to the slave
      */
-    public DockerServer(List<Path> pathsToShare, ClassLoader... classLoaders) throws IOException, InterruptedException {
+    public DockerSlave(List<Path> pathsToShare, ClassLoader... classLoaders) throws IOException, InterruptedException {
         super(true, classLoaders);
         //Pull first so we can easily get status
         new ProcessBuilder("docker", "pull", DOCKER_IMAGE).inheritIO().start().waitFor();

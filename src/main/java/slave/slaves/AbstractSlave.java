@@ -1,8 +1,9 @@
-package server.servers;
+package slave.slaves;
 
-import server.Supplier;
+import shared.exceptions.SlaveDeadException;
+import shared.Supplier;
 import shared.*;
-import slave.SlaveMain;
+import slaveProcess.SlaveProcessMain;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -19,10 +20,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * A AbstractServer is used when we have a server that executes code in a slave process somewhere.
+ * A AbstractSlave is used when we have a server that executes code in a slave process somewhere.
  */
-abstract class AbstractServer implements Server {
-    private Slave slave;
+abstract class AbstractSlave implements Slave {
+    private shared.Slave slave;
     private int registryPort;
     private ClassLoader[] classLoaders;
     private boolean addShutdownHooks;
@@ -33,7 +34,7 @@ abstract class AbstractServer implements Server {
      * @param useShutdownHook true if this server should register a hook to automatically handle cleanup
      * @param classLoaders    a list of classloaders to supply classes to the slave, if useAgent is false
      */
-    AbstractServer(boolean useShutdownHook, ClassLoader... classLoaders) throws IOException {
+    AbstractSlave(boolean useShutdownHook, ClassLoader... classLoaders) throws IOException {
         if (classLoaders.length == 0) {
             throw new IOException("A classloader is expected!");
         }
@@ -62,7 +63,7 @@ abstract class AbstractServer implements Server {
         args.add(javaCommand);
         args.add("-cp");
         args.add(Arrays.stream(getClassPath()).map(path -> libLocation + "/" + path).collect(Collectors.joining(":")));
-        args.add(SlaveMain.class.getName());
+        args.add(SlaveProcessMain.class.getName());
         args.addAll(Arrays.asList(getSlaveArgs()));
         return args.toArray(new String[0]);
     }
@@ -99,7 +100,7 @@ abstract class AbstractServer implements Server {
         }
         while (true) {
             try {
-                slave = (Slave) registry.lookup("slave");
+                slave = (shared.Slave) registry.lookup("slaveProcess");
                 break;
             } catch (NotBoundException e) {
                 Thread.sleep(10);

@@ -1,4 +1,6 @@
-package shared;
+package shared.exceptions;
+
+import shared.RemoteObject;
 
 public class SlaveException extends RuntimeException {
     private RemoteObject<Throwable> child;

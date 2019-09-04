@@ -2,13 +2,13 @@ import compiler.JavaCompiler;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import server.SafeCodeLibrary;
-import server.servers.DirectServer;
-import server.servers.DockerServer;
-import server.servers.ProcessServer;
-import server.servers.Server;
-import shared.IncorrectSlaveException;
+import shared.exceptions.IncorrectSlaveException;
 import shared.RemoteObject;
+import shared.SafeCodeLibrary;
+import slave.slaves.DirectSlave;
+import slave.slaves.DockerSlave;
+import slave.slaves.ProcessSlave;
+import slave.slaves.Slave;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -36,7 +36,7 @@ public class Tests {
 
     @Test
     public void basicTest() throws IOException, InterruptedException {
-        RemoteObject<Adder> c = new ProcessServer(JavaCompiler.getClassLoader()).call(Adder::new);
+        RemoteObject<Adder> c = new ProcessSlave(JavaCompiler.getClassLoader()).call(Adder::new);
         RemoteObject<Integer> i = c.call(a -> a.calculateNumber(5, 6));
         Assert.assertEquals(i.get(), 11, 1);
     }
@@ -55,7 +55,7 @@ public class Tests {
 
     @Test
     public void multiTest() throws IOException, InterruptedException {
-        ProcessServer first = new ProcessServer(JavaCompiler.getClassLoader());
+        ProcessSlave first = new ProcessSlave(JavaCompiler.getClassLoader());
         RemoteObject<A> a1 = first.call(() -> new A(3));
         RemoteObject<A> a2 = first.call(() -> new A(5));
         RemoteObject<A> a3 = first.call(a1, a2, A::another);
@@ -68,9 +68,9 @@ public class Tests {
 
     @Test(expected = IncorrectSlaveException.class)
     public void testIncorrectRemoteBackend() throws IOException, InterruptedException {
-        ProcessServer first = new ProcessServer(JavaCompiler.getClassLoader());
-        ProcessServer second = new ProcessServer(JavaCompiler.getClassLoader());
-        //Start two RemoteBackends, and then try to call a function on another ProcessServer
+        ProcessSlave first = new ProcessSlave(JavaCompiler.getClassLoader());
+        ProcessSlave second = new ProcessSlave(JavaCompiler.getClassLoader());
+        //Start two RemoteBackends, and then try to call a function on another ProcessSlave
         RemoteObject<LocalAdder> c = first.call(LocalAdder::new);
         second.call(c, c2 -> c2);
     }
@@ -90,8 +90,8 @@ public class Tests {
 
     @Test
     public void copyObject() throws IOException, InterruptedException {
-        ProcessServer first = new ProcessServer(JavaCompiler.getClassLoader());
-        ProcessServer second = new ProcessServer(JavaCompiler.getClassLoader());
+        ProcessSlave first = new ProcessSlave(JavaCompiler.getClassLoader());
+        ProcessSlave second = new ProcessSlave(JavaCompiler.getClassLoader());
         RemoteObject<LocalAdder> c = first.call(LocalAdder::new);
         Assert.assertEquals(c.call(t -> t.addToBase(5)).get(), 15, 0);
         RemoteObject<LocalAdder> c2 = c.copy(second);
@@ -118,53 +118,53 @@ public class Tests {
     @Test
     public void time() throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         long expected = 49999995000000L;
-        Map<Server, Long> timings = new HashMap<>();
-        List<Class<? extends Server>> backendsClasses = new ArrayList<>();
-        backendsClasses.add(DirectServer.class);
-        backendsClasses.add(ProcessServer.class);
-        backendsClasses.add(DockerServer.class);
-        List<Server> servers = new ArrayList<>();
+        Map<Slave, Long> timings = new HashMap<>();
+        List<Class<? extends Slave>> backendsClasses = new ArrayList<>();
+        backendsClasses.add(DirectSlave.class);
+        backendsClasses.add(ProcessSlave.class);
+        backendsClasses.add(DockerSlave.class);
+        List<Slave> slaves = new ArrayList<>();
         ClassLoader[] loaders = new ClassLoader[]{JavaCompiler.getClassLoader()};
-        for (Class<? extends Server> clazz : backendsClasses) {
+        for (Class<? extends Slave> clazz : backendsClasses) {
             System.out.println("Constructing " + clazz.getName());
             Instant start = Instant.now();
-            servers.add(clazz.getDeclaredConstructor(ClassLoader[].class).newInstance((Object) loaders));
+            slaves.add(clazz.getDeclaredConstructor(ClassLoader[].class).newInstance((Object) loaders));
             Instant end = Instant.now();
             System.out.println("Time taken to start " + clazz.getName() + ": " + Duration.between(start, end).toMillis());
         }
         int testCount = 20;
-        for (Server server : servers) {
+        for (Slave slave : slaves) {
             for (int i = 0; i < testCount + 5; i++) {
                 Instant start = Instant.now();
-                RemoteObject<TimingTest> test = server.call(TimingTest::new);
+                RemoteObject<TimingTest> test = slave.call(TimingTest::new);
                 test.run(TimingTest::addAll);
                 TimingTest t = test.get();
                 Instant end = Instant.now();
                 Assert.assertEquals(expected, t.local, 0);
                 if (i > 5) {
-                    timings.put(server, timings.getOrDefault(server, 0L) + Duration.between(start, end).toMillis());
+                    timings.put(slave, timings.getOrDefault(slave, 0L) + Duration.between(start, end).toMillis());
                 }
             }
         }
-        for (Server server : servers) {
-            System.out.println("Time taken for " + server.getClass().getName() + " :" + timings.get(server) / testCount);
+        for (Slave slave : slaves) {
+            System.out.println("Time taken for " + slave.getClass().getName() + " :" + timings.get(slave) / testCount);
         }
     }
 
     @Test
     public void TestDynamicCompilation() throws Exception {
-        Server[] servers = new Server[]{
-                new DirectServer(JavaCompiler.getClassLoader()),
-                new ProcessServer(JavaCompiler.getClassLoader()),
-                new DockerServer(JavaCompiler.getClassLoader()),
+        Slave[] slaves = new Slave[]{
+                new DirectSlave(JavaCompiler.getClassLoader()),
+                new ProcessSlave(JavaCompiler.getClassLoader()),
+                new DockerSlave(JavaCompiler.getClassLoader()),
         };
         Class<?> clazz = JavaCompiler.compile(
                 "public class Test {" +
                         "public String getData() {return \"test\";}" +
                         "}", "Test");
-        for (Server server : servers) {
-            System.out.println(server.getClass().getName());
-            Assert.assertEquals("test", server.call(() -> {
+        for (Slave slave : slaves) {
+            System.out.println(slave.getClass().getName());
+            Assert.assertEquals("test", slave.call(() -> {
                 try {
                     assert clazz != null;
                     return clazz.getDeclaredConstructor().newInstance();
@@ -185,57 +185,57 @@ public class Tests {
 
     @Test
     public void TestStopping() throws Exception {
-        System.out.println("Constructing servers");
-        Server[] servers = new Server[]{
-                new ProcessServer(JavaCompiler.getClassLoader()),
-                new DockerServer(JavaCompiler.getClassLoader()),
+        System.out.println("Constructing slaves");
+        Slave[] slaves = new Slave[]{
+                new ProcessSlave(JavaCompiler.getClassLoader()),
+                new DockerSlave(JavaCompiler.getClassLoader()),
         };
 
-        for (Server server : servers) {
-            String name = server.getClass().getName();
+        for (Slave slave : slaves) {
+            String name = slave.getClass().getName();
             System.out.println("Stopping: " + name);
-            server.terminate();
-            Assert.assertFalse(server.isAlive());
+            slave.terminate();
+            Assert.assertFalse(slave.isAlive());
             System.out.println("Stopped: " + name);
         }
     }
 
     @Test
     public void TestCrashing() throws Exception {
-        System.out.println("Constructing servers");
-        Server[] servers = new Server[]{
-                new ProcessServer(JavaCompiler.getClassLoader()),
-                new DockerServer(JavaCompiler.getClassLoader()),
+        System.out.println("Constructing slaves");
+        Slave[] slaves = new Slave[]{
+                new ProcessSlave(JavaCompiler.getClassLoader()),
+                new DockerSlave(JavaCompiler.getClassLoader()),
         };
 
         //Simulate a process crash with System.exit
-        for (Server server : servers) {
-            String name = server.getClass().getName();
+        for (Slave slave : slaves) {
+            String name = slave.getClass().getName();
             System.out.println("Crashing: " + name);
             try {
-                server.call(() -> System.exit(1));
+                slave.call(() -> System.exit(1));
             } catch (RemoteException ignored) {
                 //We expect a RemoteException here, as RMI will lose its connection to the slave
             }
-            server.waitForExit();
-            Assert.assertFalse(server.isAlive());
+            slave.waitForExit();
+            Assert.assertFalse(slave.isAlive());
             System.out.println("Stopped: " + name);
         }
     }
 
     @Test
     public void TestKilling() throws Exception {
-        System.out.println("Constructing servers");
-        Server[] servers = new Server[]{
-                new ProcessServer(JavaCompiler.getClassLoader()),
-                new DockerServer(JavaCompiler.getClassLoader()),
+        System.out.println("Constructing slaves");
+        Slave[] slaves = new Slave[]{
+                new ProcessSlave(JavaCompiler.getClassLoader()),
+                new DockerSlave(JavaCompiler.getClassLoader()),
         };
 
-        for (Server server : servers) {
-            String name = server.getClass().getName();
+        for (Slave slave : slaves) {
+            String name = slave.getClass().getName();
             System.out.println("Killing: " + name);
-            server.terminate();
-            Assert.assertFalse(server.isAlive());
+            slave.terminate();
+            Assert.assertFalse(slave.isAlive());
             System.out.println("Stopped: " + name);
         }
     }
@@ -248,7 +248,7 @@ public class Tests {
                 "public class Test implements java.io.Serializable {" +
                         "public String getData() {return \"test\";}" +
                         "}", "Test");
-        Assert.assertEquals("test", new ProcessServer(JavaCompiler.getClassLoader()).call(() -> {
+        Assert.assertEquals("test", new ProcessSlave(JavaCompiler.getClassLoader()).call(() -> {
             try {
                 assert clazz != null;
                 return clazz.newInstance();

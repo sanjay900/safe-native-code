@@ -1,5 +1,7 @@
 package shared;
 
+import shared.exceptions.IncorrectSlaveException;
+
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 

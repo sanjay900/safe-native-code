@@ -1,11 +1,11 @@
-package slave;
+package slaveProcess;
 
 import java.lang.reflect.InvocationTargetException;
 
-public class SlaveMain {
+public class SlaveProcessMain {
     public static void main(String[] args) {
         try {
-            new SlaveClassloader(Thread.currentThread().getContextClassLoader()).loadClass("slave.SlaveClient")
+            new SlaveProcessClassloader(Thread.currentThread().getContextClassLoader()).loadClass("slaveProcess.SlaveProcessClient")
                     .getDeclaredConstructor(int.class)
                     .newInstance(Integer.parseInt(args[args.length - 1]));
         } catch (ClassNotFoundException | IllegalAccessException | NoSuchMethodException | InvocationTargetException | InstantiationException ex) {

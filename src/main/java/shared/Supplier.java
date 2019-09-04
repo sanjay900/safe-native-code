@@ -1,4 +1,4 @@
-package server;
+package shared;
 
 
 import shared.Retriever;
@@ -6,7 +6,6 @@ import shared.Utils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.rmi.RemoteException;
@@ -41,17 +40,5 @@ public class Supplier extends UnicastRemoteObject implements Retriever {
             }
         }
         return null;
-    }
-
-    // It is entirely possible that a direct server may attempt to override System.out, so lets store a static instance here.
-    private static PrintStream out = System.out;
-    private static PrintStream err = System.err;
-
-    public void printOut(int i) {
-        out.write(i);
-    }
-
-    public void printErr(int i) {
-        err.write(i);
     }
 }

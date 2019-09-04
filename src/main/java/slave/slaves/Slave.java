@@ -1,13 +1,13 @@
-package server.servers;
+package slave.slaves;
 
 import shared.SharedAPI;
 
 import java.io.IOException;
 
 /**
- * A Server is a type of service that can command a slave of some sort.
+ * A Slave is a type of service that can command a slave of some sort.
  */
-public interface Server extends SharedAPI {
+public interface Slave extends SharedAPI {
 
     /**
      * Is this server still alive

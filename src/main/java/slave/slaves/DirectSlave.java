@@ -1,24 +1,24 @@
-package server.servers;
+package slave.slaves;
 
-import slave.SlaveMain;
+import slaveProcess.SlaveProcessMain;
 
 import java.io.IOException;
 
 /**
- * A Direct Server is a server that does absolutely nothing and just runs the code on the same JVM.
+ * A Direct Slave is a server that does absolutely nothing and just runs the code on the same JVM.
  * This is only for benchmarking, and isn't fully compatible as it can't handle classloaders.
  */
-public class DirectServer extends AbstractServer {
+public class DirectSlave extends AbstractSlave {
 
     /**
      * Create a slave that runs inside this process
      *
      * @param classLoaders a list of classloaders to supply classes to the slave, if useAgent is false
      */
-    public DirectServer(ClassLoader... classLoaders) throws IOException, InterruptedException {
+    public DirectSlave(ClassLoader... classLoaders) throws IOException, InterruptedException {
         super(false, classLoaders);
         //At this point, we are pretending to be a slave. Start the slave components in another thread.
-        Thread slaveInitThread = new Thread(() -> SlaveMain.main(getSlaveArgs()));
+        Thread slaveInitThread = new Thread(() -> SlaveProcessMain.main(getSlaveArgs()));
         slaveInitThread.start();
         //Now set up the registry, knowing that it is being created above in another thread
         setupRegistry();
