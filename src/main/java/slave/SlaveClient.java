@@ -128,4 +128,6 @@ public class SlaveClient extends UnicastRemoteObject implements Slave {
         localObjects.put(r, object);
         return r;
     }
+    //Add remove to RemoteObject
+    //finalizer of RemoteObject<T> needs to call delete
 }

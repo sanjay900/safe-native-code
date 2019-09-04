@@ -28,6 +28,7 @@ public class ClassPreloader {
             }
         });
         System.out.println("Preloaded " + loadedClasses.size() + " classes.");
+        //TODO: disable loading other classes
     }
 }
 

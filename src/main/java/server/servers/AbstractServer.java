@@ -34,6 +34,9 @@ abstract class AbstractServer implements Server {
      * @param classLoaders    a list of classloaders to supply classes to the slave, if useAgent is false
      */
     AbstractServer(boolean useShutdownHook, ClassLoader... classLoaders) throws IOException {
+        if (classLoaders.length == 0) {
+            throw new IOException("A classloader is expected!");
+        }
         this.addShutdownHooks = useShutdownHook;
         this.classLoaders = classLoaders;
         this.registryPort = findAvailablePort();

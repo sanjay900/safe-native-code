@@ -29,19 +29,14 @@ public class Tests {
         }
     }
 
-    private static ProcessServer first;
-    private static ProcessServer second;
-
     @BeforeClass
-    public static void init() throws InterruptedException, IOException {
+    public static void init() {
         SafeCodeLibrary.secure();
-        first = new ProcessServer(JavaCompiler.getClassLoader());
-        second = new ProcessServer(JavaCompiler.getClassLoader());
     }
 
     @Test
-    public void basicTest() throws IOException {
-        RemoteObject<Adder> c = first.call(Adder::new);
+    public void basicTest() throws IOException, InterruptedException {
+        RemoteObject<Adder> c = new ProcessServer(JavaCompiler.getClassLoader()).call(Adder::new);
         RemoteObject<Integer> i = c.call(a -> a.calculateNumber(5, 6));
         Assert.assertEquals(i.get(), 11, 1);
     }
@@ -59,7 +54,8 @@ public class Tests {
     }
 
     @Test
-    public void multiTest() throws IOException {
+    public void multiTest() throws IOException, InterruptedException {
+        ProcessServer first = new ProcessServer(JavaCompiler.getClassLoader());
         RemoteObject<A> a1 = first.call(() -> new A(3));
         RemoteObject<A> a2 = first.call(() -> new A(5));
         RemoteObject<A> a3 = first.call(a1, a2, A::another);
@@ -71,7 +67,9 @@ public class Tests {
     }
 
     @Test(expected = IncorrectSlaveException.class)
-    public void testIncorrectRemoteBackend() throws IOException {
+    public void testIncorrectRemoteBackend() throws IOException, InterruptedException {
+        ProcessServer first = new ProcessServer(JavaCompiler.getClassLoader());
+        ProcessServer second = new ProcessServer(JavaCompiler.getClassLoader());
         //Start two RemoteBackends, and then try to call a function on another ProcessServer
         RemoteObject<LocalAdder> c = first.call(LocalAdder::new);
         second.call(c, c2 -> c2);
@@ -91,7 +89,9 @@ public class Tests {
 
 
     @Test
-    public void copyObject() throws IOException {
+    public void copyObject() throws IOException, InterruptedException {
+        ProcessServer first = new ProcessServer(JavaCompiler.getClassLoader());
+        ProcessServer second = new ProcessServer(JavaCompiler.getClassLoader());
         RemoteObject<LocalAdder> c = first.call(LocalAdder::new);
         Assert.assertEquals(c.call(t -> t.addToBase(5)).get(), 15, 0);
         RemoteObject<LocalAdder> c2 = c.copy(second);
@@ -155,7 +155,7 @@ public class Tests {
     public void TestDynamicCompilation() throws Exception {
         Server[] servers = new Server[]{
                 new DirectServer(JavaCompiler.getClassLoader()),
-                first,
+                new ProcessServer(JavaCompiler.getClassLoader()),
                 new DockerServer(JavaCompiler.getClassLoader()),
         };
         Class<?> clazz = JavaCompiler.compile(
@@ -208,17 +208,16 @@ public class Tests {
                 new DockerServer(JavaCompiler.getClassLoader()),
         };
 
-        //Simulate a process crash with System.terminate
+        //Simulate a process crash with System.exit
         for (Server server : servers) {
             String name = server.getClass().getName();
             System.out.println("Crashing: " + name);
             try {
                 server.call(() -> System.exit(1));
             } catch (RemoteException ignored) {
-                //We expect things to break here, as the RMI connection will just terminate suddenly.
+                //We expect a RemoteException here, as RMI will lose its connection to the slave
             }
-            //Vagrant and docker do take a second or so to stop
-            Thread.sleep(1000);
+            server.waitForExit();
             Assert.assertFalse(server.isAlive());
             System.out.println("Stopped: " + name);
         }
@@ -243,13 +242,13 @@ public class Tests {
 
     @Test(expected = UnmarshalException.class)
     @SuppressWarnings("deprecation")
-    public void TestSerialisation() throws Exception {
+    public void TestSerialisation() throws IOException, InterruptedException {
 
         Class<?> clazz = JavaCompiler.compile(
                 "public class Test implements java.io.Serializable {" +
                         "public String getData() {return \"test\";}" +
                         "}", "Test");
-        Assert.assertEquals("test", first.call(() -> {
+        Assert.assertEquals("test", new ProcessServer(JavaCompiler.getClassLoader()).call(() -> {
             try {
                 assert clazz != null;
                 return clazz.newInstance();
