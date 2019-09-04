@@ -46,7 +46,7 @@ public interface SharedAPI {
 
     <T> RemoteObject<T> copy(RemoteObject<T> original) throws RemoteException;
 
-    void call(SerializableRunnable lambda) throws RemoteException;
+    void run(SerializableRunnable lambda) throws RemoteException;
     <R> RemoteObject<R> call(SerializableSupplier<R> lambda) throws RemoteException;
 
 

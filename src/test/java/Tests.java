@@ -2,7 +2,7 @@ import compiler.JavaCompiler;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import shared.exceptions.IncorrectSlaveException;
+import shared.exceptions.UnknownObjectException;
 import shared.RemoteObject;
 import shared.SafeCodeLibrary;
 import slave.slaves.DirectSlave;
@@ -56,21 +56,21 @@ public class Tests {
     @Test
     public void multiTest() throws IOException, InterruptedException {
         ProcessSlave first = new ProcessSlave(JavaCompiler.getClassLoader());
-        RemoteObject<A> a1 = first.call(() -> new A(3));
-        RemoteObject<A> a2 = first.call(() -> new A(5));
-        RemoteObject<A> a3 = first.call(a1, a2, A::another);
-        A _a2 = new A(3);
-        RemoteObject<A> a323 = a1.call(la1 -> la1.another(_a2));
-        RemoteObject<A> a32 = first.call(a1, a323, A::another);
-        Assert.assertEquals(a3.call(s -> s.f).get(), 8, 0);
-        Assert.assertEquals(a32.call(s -> s.f).get(), 9, 0);
+        RemoteObject<A> aWith3 = first.call(() -> new A(3));
+        RemoteObject<A> aWith5 = first.call(() -> new A(5));
+        RemoteObject<A> aWith3Plus5 = first.call(aWith3, aWith5, A::another);
+        A localAWith3 = new A(3);
+        RemoteObject<A> aWith3PlusLocal3 = aWith3.call(lAWith3 -> lAWith3.another(localAWith3));
+        RemoteObject<A> aWith3Plus3PlusLocal3 = first.call(aWith3, aWith3PlusLocal3, A::another);
+        Assert.assertEquals(aWith3Plus5.call(s -> s.f).get(), 8, 0);
+        Assert.assertEquals(aWith3Plus3PlusLocal3.call(s -> s.f).get(), 9, 0);
     }
 
-    @Test(expected = IncorrectSlaveException.class)
+    @Test(expected = UnknownObjectException.class)
     public void testIncorrectRemoteBackend() throws IOException, InterruptedException {
         ProcessSlave first = new ProcessSlave(JavaCompiler.getClassLoader());
         ProcessSlave second = new ProcessSlave(JavaCompiler.getClassLoader());
-        //Start two RemoteBackends, and then try to call a function on another ProcessSlave
+        //Start two Slaves, and then try to use an object with an incorrect slave
         RemoteObject<LocalAdder> c = first.call(LocalAdder::new);
         second.call(c, c2 -> c2);
     }
@@ -94,7 +94,7 @@ public class Tests {
         ProcessSlave second = new ProcessSlave(JavaCompiler.getClassLoader());
         RemoteObject<LocalAdder> c = first.call(LocalAdder::new);
         Assert.assertEquals(c.call(t -> t.addToBase(5)).get(), 15, 0);
-        RemoteObject<LocalAdder> c2 = c.copy(second);
+        RemoteObject<LocalAdder> c2 = second.copy(c);
         c2.run(s -> s.setBase(15));
         //Since we copied the object, the original object should not be modified in the process.
         Assert.assertEquals(c.call(t -> t.addToBase(5)).get(), 15, 0);
@@ -213,7 +213,7 @@ public class Tests {
             String name = slave.getClass().getName();
             System.out.println("Crashing: " + name);
             try {
-                slave.call(() -> System.exit(1));
+                slave.run(() -> System.exit(1));
             } catch (RemoteException ignored) {
                 //We expect a RemoteException here, as RMI will lose its connection to the slave
             }
@@ -257,5 +257,13 @@ public class Tests {
             }
             return null;
         }).get());
+    }
+
+    @Test(expected = UnknownObjectException.class)
+    public void TestDeletion() throws IOException, InterruptedException {
+        Slave s = new ProcessSlave(JavaCompiler.getClassLoader());
+        RemoteObject<LocalAdder> la = s.call(LocalAdder::new);
+        la.remove();
+        la.get();
     }
 }

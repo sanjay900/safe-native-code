@@ -119,9 +119,9 @@ abstract class AbstractSlave implements Slave {
     }
 
     @Override
-    public void call(SerializableRunnable lambda) throws RemoteException {
+    public void run(SerializableRunnable lambda) throws RemoteException {
         checkAlive();
-        slave.call(lambda);
+        slave.run(lambda);
     }
 
     @Override

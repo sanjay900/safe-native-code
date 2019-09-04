@@ -39,6 +39,11 @@ public class SlaveProcessObject<T> implements RemoteObject<T> {
     }
 
     @Override
+    public void remove() throws RemoteException {
+        slave.remove(this);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -49,5 +54,9 @@ public class SlaveProcessObject<T> implements RemoteObject<T> {
     @Override
     public int hashCode() {
         return Objects.hash(uuid);
+    }
+
+    protected void finalize() throws RemoteException {
+        this.remove();
     }
 }

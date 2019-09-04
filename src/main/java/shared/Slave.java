@@ -1,6 +1,6 @@
 package shared;
 
-import shared.exceptions.IncorrectSlaveException;
+import shared.exceptions.UnknownObjectException;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -10,5 +10,7 @@ import java.rmi.RemoteException;
  */
 public interface Slave extends SharedAPI, Remote {
 
-    <T> T get(RemoteObject<T> obj) throws RemoteException, IncorrectSlaveException;
+    <T> T get(RemoteObject<T> obj) throws RemoteException, UnknownObjectException;
+
+    void remove(RemoteObject obj) throws RemoteException, UnknownObjectException;
 }

@@ -7,6 +7,7 @@ import java.rmi.RemoteException;
 
 /**
  * RemoteObject is used for wrapping an object that is stored in a remote process
+ *
  * @param <T> the type of object this is wrapping
  */
 public interface RemoteObject<T> extends Serializable {
@@ -36,6 +37,13 @@ public interface RemoteObject<T> extends Serializable {
      * @throws RemoteException An error occurred while communicating with the remote JVM
      */
     T get() throws RemoteException;
+
+    /**
+     * Delete this object
+     *
+     * @throws RemoteException An error occurred while communicating with the remote JVM
+     */
+    void remove() throws RemoteException;
 
     @Override
     boolean equals(Object o);
