@@ -31,7 +31,7 @@ public class SlaveProcessObject<T> implements RemoteObject<T> {
     }
 
 
-    public RemoteObject<T> copy(SlaveType slave) throws RemoteException {
+    public RemoteObject<T> copyTo(SlaveType slave) throws RemoteException {
         return slave.copy(this);
     }
 

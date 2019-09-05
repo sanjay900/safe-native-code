@@ -34,7 +34,7 @@ public class DockerSlave extends AbstractSlave {
      * @param classLoaders a list of classloaders to supply classes to the slave
      */
     public DockerSlave(List<Path> pathsToShare, ClassLoader... classLoaders) throws IOException, InterruptedException {
-        super(true, classLoaders);
+        super(classLoaders);
         //Pull first so we can easily get status
         new ProcessBuilder("docker", "pull", DOCKER_IMAGE).inheritIO().start().waitFor();
         List<String> args = new ArrayList<>(Arrays.asList("docker", "create", "--rm", "--network", "host"));

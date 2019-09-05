@@ -13,10 +13,10 @@ public class ProcessSlave extends AbstractSlave {
     /**
      * Create a slave that runs inside another process
      *
-     * @param classLoaders a list of classloaders to supply classes to the slave, if useAgent is false
+     * @param classLoaders a list of classloaders to supply classes to the slave
      */
     public ProcessSlave(ClassLoader... classLoaders) throws IOException, InterruptedException {
-        super(true, classLoaders);
+        super(classLoaders);
         Path javaProcess = Paths.get(System.getProperty("java.home"), "bin", "java");
         process = new ProcessBuilder(getJavaCommandArgs(javaProcess.toString(), "")).inheritIO().start();
         //End the remoteSlave process if the parent process ends.

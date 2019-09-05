@@ -16,7 +16,7 @@ public class DirectSlave extends AbstractSlave {
      * @param classLoaders a list of classloaders to supply classes to the slave, if useAgent is false
      */
     public DirectSlave(ClassLoader... classLoaders) throws IOException, InterruptedException {
-        super(false, classLoaders);
+        super(classLoaders);
         //At this point, we are pretending to be a slave. Start the slave components in another thread.
         Thread slaveInitThread = new Thread(() -> SlaveProcessMain.main(getSlaveArgs()));
         slaveInitThread.start();
@@ -34,12 +34,16 @@ public class DirectSlave extends AbstractSlave {
 
     @Override
     public void terminate() {
-        System.exit(0);
+        //Terminating the current JVM isn't a good idea
+        throw new UnsupportedOperationException("Terminating a DirectSlave is not supported");
     }
 
     @Override
     public void waitForExit() throws InterruptedException {
-        //Hopefully, the current JVM never dies, so lets just put this thread to sleep.
-        Thread.currentThread().wait();
+        //Since waitForExit is called in the same JVM, this call is either waiting, or the process isn't running
+        //Since there isn't a case where we can continue past here, lets just wait forever.
+        while(true) {
+            Thread.sleep(Long.MAX_VALUE);
+        }
     }
 }

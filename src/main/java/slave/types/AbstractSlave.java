@@ -4,10 +4,9 @@ import slave.BytecodeSupplier;
 import slave.RemoteObject;
 import slave.Slave;
 import slave.exceptions.SlaveDeadException;
-import slave.exceptions.UnknownObjectException;
-import utils.function.*;
-import utils.function.Runnable;
 import slave.process.SlaveProcessMain;
+import utils.function.Runnable;
+import utils.function.*;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -30,24 +29,19 @@ public abstract class AbstractSlave implements SlaveType {
     private Slave slave;
     private int registryPort;
     private ClassLoader[] classLoaders;
-    private boolean addShutdownHooks;
 
     /**
      * Create a slave that runs in another process somewhere
      *
-     * @param useShutdownHook true if this server should register a hook to automatically handle cleanup
-     * @param classLoaders    a list of classloaders to supply classes to the slave, if useAgent is false
+     * @param classLoaders a list of classloaders to supply classes to the slave, if useAgent is false
      */
-    AbstractSlave(boolean useShutdownHook, ClassLoader... classLoaders) throws IOException {
+    AbstractSlave(ClassLoader... classLoaders) throws IOException {
         if (classLoaders.length == 0) {
             throw new IOException("A classloader is expected!");
         }
-        this.addShutdownHooks = useShutdownHook;
         this.classLoaders = classLoaders;
         this.registryPort = findAvailablePort();
-        if (useShutdownHook) {
-            Runtime.getRuntime().addShutdownHook(new Thread(this::terminate));
-        }
+        Runtime.getRuntime().addShutdownHook(new Thread(this::terminate));
     }
 
     private int findAvailablePort() throws IOException {
@@ -86,17 +80,15 @@ public abstract class AbstractSlave implements SlaveType {
         while (true) {
             try {
                 registry.rebind("bytecodeLookup", retriever);
-                if (addShutdownHooks) {
-                    //Start a thread that monitors the remote process, and frees up the retrievers ports when it is completed.
-                    new Thread(() -> {
-                        try {
-                            this.waitForExit();
-                            UnicastRemoteObject.unexportObject(retriever, true);
-                        } catch (InterruptedException | IOException ex) {
-                            throw new RuntimeException(ex);
-                        }
-                    }).start();
-                }
+                //Start a thread that monitors the remote process, and frees up the retrievers ports when it is completed.
+                new Thread(() -> {
+                    try {
+                        this.waitForExit();
+                        UnicastRemoteObject.unexportObject(retriever, true);
+                    } catch (InterruptedException | IOException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                }).start();
                 break;
             } catch (RemoteException e) {
                 Thread.sleep(10);

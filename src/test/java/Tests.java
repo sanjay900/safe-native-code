@@ -59,8 +59,8 @@ public class Tests {
     }
 
     @Test
-    public void basicTest() throws IOException, InterruptedException {
-        RemoteObject<Adder> c = new ProcessSlave(JavaCompiler.getClassLoader()).call(Adder::new);
+    public void testCallAndGet() throws Exception {
+        RemoteObject<Adder> c = construct().call(Adder::new);
         RemoteObject<Integer> i = c.call(a -> a.calculateNumber(5, 6));
         Assert.assertEquals(i.get(), 11, 1);
     }
@@ -78,7 +78,7 @@ public class Tests {
     }
 
     @Test
-    public void multiTest() throws IOException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+    public void testMultipleSlaves() throws IOException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         SlaveType slave = construct();
         RemoteObject<A> aWith3 = slave.call(() -> new A(3));
         RemoteObject<A> aWith5 = slave.call(() -> new A(5));
@@ -175,7 +175,7 @@ public class Tests {
     }
 
     @Test
-    public void TestDynamicCompilation() throws Exception {
+    public void testDynamicCompilation() throws Exception {
         JavaCompiler.compile(DYNAMIC_CODE, "Test");
         Object ret = construct()
                 .call(() -> Class.forName("Test").getDeclaredConstructor().newInstance())
@@ -184,7 +184,7 @@ public class Tests {
     }
 
     @Test
-    public void TestStopping() throws Exception {
+    public void testStopping() throws Exception {
         if (clazz == DirectSlave.class) {
             return;
         }
@@ -194,7 +194,7 @@ public class Tests {
     }
 
     @Test
-    public void TestCrashing() throws Exception {
+    public void testCrashing() throws Exception {
         if (clazz == DirectSlave.class) {
             return;
         }
@@ -209,7 +209,7 @@ public class Tests {
     }
 
     @Test
-    public void TestKilling() throws Exception {
+    public void testKilling() throws Exception {
         if (clazz == DirectSlave.class) {
             return;
         }
@@ -220,14 +220,14 @@ public class Tests {
 
     @Test(expected = UnmarshalException.class)
     @SuppressWarnings("deprecation")
-    public void TestSerialisation() throws Exception {
+    public void testSerialisation() throws Exception {
 
         JavaCompiler.compile(DYNAMIC_CODE, "Test");
         Assert.assertEquals("test", construct().call(() -> Class.forName("Test").newInstance()).get());
     }
 
     @Test(expected = UnknownObjectException.class)
-    public void TestDeletion() throws Exception {
+    public void testDeletion() throws Exception {
         SlaveType s = construct();
         RemoteObject<LocalAdder> la = s.call(LocalAdder::new);
         la.remove();
@@ -237,12 +237,12 @@ public class Tests {
 
     }
     @Test(expected = SlaveException.class)
-    public void TestExceptions() throws Exception {
+    public void testExceptions() throws Exception {
         SlaveType s = construct();
         s.call(()-> {throw new TestException();});
     }
     @Test(expected = TestException.class)
-    public void TestException2() throws Throwable {
+    public void testException2() throws Throwable {
         SlaveType s = construct();
         try {
             s.call(() -> {
