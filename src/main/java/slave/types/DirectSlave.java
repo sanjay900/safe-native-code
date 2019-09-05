@@ -35,14 +35,13 @@ public class DirectSlave extends AbstractSlave {
     @Override
     public void terminate() {
         //Terminating the current JVM isn't a good idea
-        throw new UnsupportedOperationException("Terminating a DirectSlave is not supported");
     }
 
     @Override
     public void waitForExit() throws InterruptedException {
         //Since waitForExit is called in the same JVM, this call is either waiting, or the process isn't running
         //Since there isn't a case where we can continue past here, lets just wait forever.
-        while(true) {
+        while (true) {
             Thread.sleep(Long.MAX_VALUE);
         }
     }
