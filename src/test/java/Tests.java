@@ -1,12 +1,12 @@
 import compiler.JavaCompiler;
 import library.SafeCodeLibrary;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import slave.RemoteObject;
+import slave.exceptions.SlaveException;
 import slave.exceptions.UnknownObjectException;
 import slave.types.DirectSlave;
 import slave.types.DockerSlave;
@@ -177,21 +177,10 @@ public class Tests {
     @Test
     public void TestDynamicCompilation() throws Exception {
         JavaCompiler.compile(DYNAMIC_CODE, "Test");
-        Assert.assertEquals("test", construct().call(() -> {
-            try {
-                return Class.forName("Test").getDeclaredConstructor().newInstance();
-            } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException | ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }).call(s -> {
-            try {
-                return s.getClass().getDeclaredMethod("getData").invoke(s);
-            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }).get());
+        Object ret = construct()
+                .call(() -> Class.forName("Test").getDeclaredConstructor().newInstance())
+                .call(s -> s.getClass().getDeclaredMethod("getData").invoke(s)).get();
+        Assert.assertEquals("test", ret);
     }
 
     @Test
@@ -234,21 +223,33 @@ public class Tests {
     public void TestSerialisation() throws Exception {
 
         JavaCompiler.compile(DYNAMIC_CODE, "Test");
-        Assert.assertEquals("test", construct().call(() -> {
-            try {
-                return Class.forName("Test").newInstance();
-            } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }).get());
+        Assert.assertEquals("test", construct().call(() -> Class.forName("Test").newInstance()).get());
     }
 
     @Test(expected = UnknownObjectException.class)
-    public void TestDeletion() throws IOException, InterruptedException {
-        SlaveType s = new ProcessSlave(JavaCompiler.getClassLoader());
+    public void TestDeletion() throws Exception {
+        SlaveType s = construct();
         RemoteObject<LocalAdder> la = s.call(LocalAdder::new);
         la.remove();
         la.get();
+    }
+    static class TestException extends Exception {
+
+    }
+    @Test(expected = SlaveException.class)
+    public void TestExceptions() throws Exception {
+        SlaveType s = construct();
+        s.call(()-> {throw new TestException();});
+    }
+    @Test(expected = TestException.class)
+    public void TestException2() throws Throwable {
+        SlaveType s = construct();
+        try {
+            s.call(() -> {
+                throw new TestException();
+            });
+        } catch (SlaveException ex) {
+            throw ex.getChild().get();
+        }
     }
 }
