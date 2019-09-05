@@ -3,6 +3,7 @@ package slave.types;
 import slave.process.SlaveProcessMain;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * A Direct SlaveType is a server that does absolutely nothing and just runs the code on the same JVM.
@@ -18,7 +19,13 @@ public class DirectSlave extends AbstractSlave {
     public DirectSlave(ClassLoader... classLoaders) throws IOException, InterruptedException {
         super(classLoaders);
         //At this point, we are pretending to be a slave. Start the slave components in another thread.
-        Thread slaveInitThread = new Thread(() -> SlaveProcessMain.main(getSlaveArgs()));
+        Thread slaveInitThread = new Thread(() -> {
+            try {
+                SlaveProcessMain.main(getSlaveArgs());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
         slaveInitThread.start();
         //Now set up the registry, knowing that it is being created above in another thread
         setupRegistry();

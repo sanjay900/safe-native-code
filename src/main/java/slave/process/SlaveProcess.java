@@ -6,7 +6,7 @@ import slave.exceptions.UnknownObjectException;
 
 import java.rmi.RemoteException;
 
-public interface SlaveProcessAPI extends Slave {
+public interface SlaveProcess extends Slave {
 
     <T> T get(RemoteObject<T> obj) throws RemoteException, UnknownObjectException;
 

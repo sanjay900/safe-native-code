@@ -14,9 +14,9 @@ import java.util.UUID;
  */
 public class SlaveProcessObject<T> implements RemoteObject<T> {
     private UUID uuid;
-    private SlaveProcessAPI slave;
+    private SlaveProcess slave;
 
-    SlaveProcessObject(SlaveProcessAPI remote) {
+    SlaveProcessObject(SlaveProcess remote) {
         this.uuid = UUID.randomUUID();
         this.slave = remote;
     }
