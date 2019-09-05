@@ -12,9 +12,9 @@ import java.util.Arrays;
  * SlaveProcessClassloader facilitates loading classes from the main process, using RMI. We retrieve a BytecodeSupplier from the host, and use it to load classes.
  */
 public class SlaveProcessClassloader extends SecureClassLoader {
-    private static IBytecodeSupplier lookup;
+    private static IBytecodeSupplier bytecodeSupplier;
     //We need a list of prohibited classes, as we do not want to proxy core java classes through our proxy.
-    //We also have to avoid proxying a bunch of
+    //We also have to avoid proxying any of our classes that are used by the master, in the case of a direct JVM.
     private String[] prohibited = new String[]{"java.", "javax.", "com.sun.", "sun.", "jdk.", "library.", "slave.", "utils.function"};
 
     SlaveProcessClassloader(ClassLoader parent) {
@@ -39,9 +39,9 @@ public class SlaveProcessClassloader extends SecureClassLoader {
         }
         // If we don't have a reference to the main JVM yet, it's too early to need to proxy classes through it.
         // We also can not proxy core java classes, as java specifically blocks redefining anything inside the java package.
-        if (lookup == null || Arrays.stream(prohibited).anyMatch(name::startsWith)) return super.loadClass(name);
+        if (bytecodeSupplier == null || Arrays.stream(prohibited).anyMatch(name::startsWith)) return super.loadClass(name);
         try {
-            byte[] b = lookup.getByteCode(name);
+            byte[] b = bytecodeSupplier.getByteCode(name);
             if (b == null) return super.loadClass(name);
             return super.defineClass(name, b, 0, b.length);
         } catch (RemoteException e) {
@@ -51,7 +51,7 @@ public class SlaveProcessClassloader extends SecureClassLoader {
     }
 
     // Due to the fact that this is used across modules (SlaveProcessClassloader and SlaveProcessClient exist inside different ClassLoaders), we need to make it public.
-    public static void setLookup(IBytecodeSupplier lookup) {
-        SlaveProcessClassloader.lookup = lookup;
+    public static void setByteCodeSupplier(IBytecodeSupplier bytecodeSupplier) {
+        SlaveProcessClassloader.bytecodeSupplier = bytecodeSupplier;
     }
 }

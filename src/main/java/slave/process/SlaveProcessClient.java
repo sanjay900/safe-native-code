@@ -2,7 +2,6 @@ package slave.process;
 
 import slave.RemoteObject;
 import slave.IBytecodeSupplier;
-import slave.Slave;
 import slave.exceptions.UnknownObjectException;
 import slave.exceptions.SlaveException;
 import utils.function.*;
@@ -32,7 +31,7 @@ public class SlaveProcessClient extends UnicastRemoteObject implements SlaveProc
             Thread.sleep(10);
         }
         IBytecodeSupplier r = (IBytecodeSupplier) registry.lookup("bytecodeLookup");
-        SlaveProcessClassloader.setLookup(r);
+        SlaveProcessClassloader.setByteCodeSupplier(r);
         registry.rebind("slave/process", this);
     }
 
