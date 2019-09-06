@@ -18,9 +18,8 @@ public class SlaveProcessClassloader extends SecureClassLoader {
     private String[] prohibited = new String[]{"java.", "javax.", "com.sun.", "sun.", "jdk.", "library.", "slave.", "utils.function"};
     //A list of classes that we need to specifically define using this classloader.
     //This is needed so that all any code run on the client, will use this classloader as its parent for loading classes.
-    private String[] wrap = new String[] {
-            SlaveProcessClient.class.getName(),
-            SlaveProcessClient.class.getName() + "$.*",
+    private String[] forced = new String[] {
+            SlaveProcessClient.class.getName() + "($.*)?",
             SlaveProcessObject.class.getName()
     };
 
@@ -30,7 +29,7 @@ public class SlaveProcessClassloader extends SecureClassLoader {
 
     @Override
     public Class<?> loadClass(String name) throws ClassNotFoundException {
-        if (Arrays.stream(wrap).anyMatch(name::matches)) {
+        if (Arrays.stream(forced).anyMatch(name::matches)) {
             // Reload these specific classes using this classloader instead of the app classloader.
             String className = name.replace(".", "/") + ".class";
             try {
