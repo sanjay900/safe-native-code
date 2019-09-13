@@ -18,9 +18,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * SlaveProcessClient is the Main class run by a slave
+ * SlaveProcessClient is the class implementing features for a slave
  */
-public class SlaveProcessClient extends UnicastRemoteObject implements SlaveProcessAPI {
+public class SlaveProcessClient extends UnicastRemoteObject implements SlaveProcess {
 
     private transient Map<SlaveProcessObject, Object> localObjects = new HashMap<>();
 
