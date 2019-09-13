@@ -1,6 +1,6 @@
 package slave.types;
 
-import utils.Utils;
+import slave.Utils;
 
 import java.io.IOException;
 import java.nio.file.Path;

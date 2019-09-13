@@ -1,4 +1,4 @@
-package utils;
+package slave;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

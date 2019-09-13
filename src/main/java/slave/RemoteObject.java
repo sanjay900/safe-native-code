@@ -1,9 +1,5 @@
 package slave;
 
-import utils.function.Function;
-import utils.function.Consumer;
-import slave.types.SlaveType;
-
 import java.io.Serializable;
 import java.rmi.RemoteException;
 
@@ -13,7 +9,7 @@ import java.rmi.RemoteException;
  * @param <T> the type of object this is wrapping
  */
 public interface RemoteObject<T> extends Serializable {
-    <R> RemoteObject<R> call(Function<R, T> lambda) throws RemoteException;
+    <R> RemoteObject<R> call(Functions.Function<R, T> lambda) throws RemoteException;
 
     /**
      * Execute a function on the slave, expecting no return values
@@ -21,7 +17,7 @@ public interface RemoteObject<T> extends Serializable {
      * @param lambda the function to execute
      * @throws RemoteException An error occurred while communicating with the remote JVM
      */
-    void run(Consumer<T> lambda) throws RemoteException;
+    void run(Functions.Consumer<T> lambda) throws RemoteException;
 
     /**
      * Copy this remote object to another slave
@@ -30,7 +26,7 @@ public interface RemoteObject<T> extends Serializable {
      * @return the new remote object on slave
      * @throws RemoteException An error occurred while communicating with the remote JVM
      */
-    RemoteObject<T> copyTo(SlaveType slave) throws RemoteException;
+    RemoteObject<T> copyTo(Slave slave) throws RemoteException;
 
     /**
      * Get the value this remote object represents, serializing it in the process

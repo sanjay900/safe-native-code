@@ -1,9 +1,8 @@
 package slave.process;
 
 import slave.RemoteObject;
-import slave.types.SlaveType;
-import utils.function.Consumer;
-import utils.function.Function;
+import slave.Slave;
+import slave.Functions;
 
 import java.rmi.RemoteException;
 import java.util.Objects;
@@ -21,17 +20,17 @@ public class ProcessObject<T> implements RemoteObject<T> {
         this.slave = remote;
     }
 
-    public <R> RemoteObject<R> call(Function<R, T> lambda) throws RemoteException {
+    public <R> RemoteObject<R> call(Functions.Function<R, T> lambda) throws RemoteException {
         return slave.call(this, lambda);
     }
 
 
-    public void run(Consumer<T> lambda) throws RemoteException {
+    public void run(Functions.Consumer<T> lambda) throws RemoteException {
         slave.call(this, lambda);
     }
 
 
-    public RemoteObject<T> copyTo(SlaveType slave) throws RemoteException {
+    public RemoteObject<T> copyTo(Slave slave) throws RemoteException {
         return slave.copy(this);
     }
 
