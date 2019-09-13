@@ -1,9 +1,8 @@
 package slave.types;
 
-import slave.process.SlaveProcessMain;
+import slave.process.ProcessMain;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * A Direct SlaveType is a server that does absolutely nothing and just runs the code on the same JVM.
@@ -21,7 +20,7 @@ public class DirectSlave extends AbstractSlave {
         //At this point, we are pretending to be a slave. Start the slave components in another thread.
         Thread slaveInitThread = new Thread(() -> {
             try {
-                SlaveProcessMain.main(getSlaveArgs());
+                ProcessMain.main(getSlaveArgs());
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

@@ -10,13 +10,13 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * SlaveProcessObject represents an object on a slave
+ * ProcessObject represents an object on a slave
  */
-public class SlaveProcessObject<T> implements RemoteObject<T> {
+public class ProcessObject<T> implements RemoteObject<T> {
     private UUID uuid;
-    private SlaveProcess slave;
+    private Process slave;
 
-    SlaveProcessObject(SlaveProcess remote) {
+    ProcessObject(Process remote) {
         this.uuid = UUID.randomUUID();
         this.slave = remote;
     }
@@ -48,7 +48,7 @@ public class SlaveProcessObject<T> implements RemoteObject<T> {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        SlaveProcessObject<?> that = (SlaveProcessObject<?>) o;
+        ProcessObject<?> that = (ProcessObject<?>) o;
         return Objects.equals(uuid, that.uuid);
     }
 

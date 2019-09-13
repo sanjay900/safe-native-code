@@ -2,9 +2,9 @@ package slave.process;
 
 import java.lang.reflect.InvocationTargetException;
 
-public class SlaveProcessMain {
+public class ProcessMain {
     public static void main(String[] args) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        new SlaveProcessClassloader(Thread.currentThread().getContextClassLoader()).loadClass("slave.process.SlaveProcessClient")
+        new ProcessClassloader(Thread.currentThread().getContextClassLoader()).loadClass(ProcessSlave.class.getName())
                 .getDeclaredConstructor(int.class)
                 .newInstance(Integer.parseInt(args[args.length - 1]));
     }

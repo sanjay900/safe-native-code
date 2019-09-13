@@ -18,20 +18,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * SlaveProcessClient is the class implementing features for a slave
+ * ProcessSlave is the class implementing features for a slave
  */
-public class SlaveProcessClient extends UnicastRemoteObject implements SlaveProcess {
+public class ProcessSlave extends UnicastRemoteObject implements Process {
 
-    private transient Map<SlaveProcessObject, Object> localObjects = new HashMap<>();
+    private transient Map<ProcessObject, Object> localObjects = new HashMap<>();
 
-    public SlaveProcessClient(int registryPort) throws IOException, InterruptedException, NotBoundException {
+    public ProcessSlave(int registryPort) throws IOException, InterruptedException, NotBoundException {
         Registry registry = LocateRegistry.createRegistry(registryPort);
 
         while (!Arrays.asList(registry.list()).contains("bytecodeLookup")) {
             Thread.sleep(10);
         }
         IBytecodeSupplier r = (IBytecodeSupplier) registry.lookup("bytecodeLookup");
-        SlaveProcessClassloader.setByteCodeSupplier(r);
+        ProcessClassloader.setByteCodeSupplier(r);
         registry.rebind("slave/process", this);
     }
 
@@ -187,14 +187,14 @@ public class SlaveProcessClient extends UnicastRemoteObject implements SlaveProc
 
     @SuppressWarnings("unchecked")
     public <T> T get(RemoteObject<T> obj) throws UnknownObjectException {
-        if (!(obj instanceof SlaveProcessObject) || !localObjects.containsKey(obj)) {
+        if (!(obj instanceof ProcessObject) || !localObjects.containsKey(obj)) {
             throw new UnknownObjectException();
         }
         return (T) localObjects.get(obj);
     }
 
     public void remove(RemoteObject obj) throws UnknownObjectException {
-        if (!(obj instanceof SlaveProcessObject) || !localObjects.containsKey(obj)) {
+        if (!(obj instanceof ProcessObject) || !localObjects.containsKey(obj)) {
             throw new UnknownObjectException();
         }
         localObjects.remove(obj);
@@ -206,7 +206,7 @@ public class SlaveProcessClient extends UnicastRemoteObject implements SlaveProc
     }
 
     private <T> RemoteObject<T> wrap(T object) {
-        SlaveProcessObject<T> r = new SlaveProcessObject<>(this);
+        ProcessObject<T> r = new ProcessObject<>(this);
         localObjects.put(r, object);
         return r;
     }

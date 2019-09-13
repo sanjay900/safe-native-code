@@ -9,26 +9,27 @@ import java.security.SecureClassLoader;
 import java.util.Arrays;
 
 /**
- * SlaveProcessClassloader facilitates loading classes from the main process, using RMI. We retrieve a BytecodeSupplier from the host, and use it to load classes.
+ * ProcessClassloader facilitates loading classes from the main process, using RMI. We retrieve a BytecodeSupplier from the host, and use it to load classes.
  */
-public class SlaveProcessClassloader extends SecureClassLoader {
+public class ProcessClassloader extends SecureClassLoader {
     private static IBytecodeSupplier bytecodeSupplier;
-    //We need a list of prohibited classes, as we do not want to proxy core java classes through our proxy.
-    //We also have to avoid proxying any of our classes that are used by the master, in the case of a direct JVM.
-    private String[] prohibited = new String[]{"java.", "javax.", "com.sun.", "sun.", "jdk.", "library.", "slave.", "utils.function"};
-    //A list of classes that we need to specifically define using this classloader.
+    //We need a list of prohibited classes, as we cannot recreate anything under the java. package, or jdk.internal.reflect.SerializationConstructorAccessorImpl
+    //We also have to avoid proxying slave.RemoteObject and slave.types.SlaveType, as directJVM will initialize them first with a different classloader.
+    private String[] prohibited = new String[]{"java\\..*", "slave.RemoteObject", "slave.types.SlaveType", "slave.process.ProcessClassLoader", "jdk.internal.reflect.SerializationConstructorAccessorImpl"};
+    //A list of classes that we need to load using a ProcessClassloader.
     //This is needed so that all any code run on the client, will use this classloader as its parent for loading classes.
     private String[] forced = new String[] {
-            SlaveProcessClient.class.getName() + "($.*)?",
-            SlaveProcessObject.class.getName()
+            ProcessSlave.class.getName() + "($.*)?",
+            ProcessObject.class.getName()
     };
 
-    SlaveProcessClassloader(ClassLoader parent) {
+    ProcessClassloader(ClassLoader parent) {
         super(parent);
     }
 
     @Override
     public Class<?> loadClass(String name) throws ClassNotFoundException {
+        System.out.println(name);
         if (Arrays.stream(forced).anyMatch(name::matches)) {
             // Reload these specific classes using this classloader instead of the app classloader.
             String className = name.replace(".", "/") + ".class";
@@ -42,7 +43,7 @@ public class SlaveProcessClassloader extends SecureClassLoader {
         }
         // If we don't have a reference to the main JVM yet, it's too early to need to proxy classes through it.
         // We also can not proxy core java classes, as java specifically blocks redefining anything inside the java package.
-        if (bytecodeSupplier == null || Arrays.stream(prohibited).anyMatch(name::startsWith))
+        if (bytecodeSupplier == null || Arrays.stream(prohibited).anyMatch(name::matches))
             return super.loadClass(name);
         try {
             byte[] b = bytecodeSupplier.getByteCode(name);
@@ -54,8 +55,8 @@ public class SlaveProcessClassloader extends SecureClassLoader {
         }
     }
 
-    // Due to the fact that this is used across modules (SlaveProcessClassloader and SlaveProcessClient exist inside different ClassLoaders), we need to make it public.
+    // Due to the fact that this is used across modules (ProcessClassloader and ProcessSlave exist inside different ClassLoaders), we need to make it public.
     public static void setByteCodeSupplier(IBytecodeSupplier bytecodeSupplier) {
-        SlaveProcessClassloader.bytecodeSupplier = bytecodeSupplier;
+        ProcessClassloader.bytecodeSupplier = bytecodeSupplier;
     }
 }

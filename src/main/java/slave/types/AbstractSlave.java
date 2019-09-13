@@ -4,7 +4,7 @@ import slave.BytecodeSupplier;
 import slave.RemoteObject;
 import slave.Slave;
 import slave.exceptions.SlaveDeadException;
-import slave.process.SlaveProcessMain;
+import slave.process.ProcessMain;
 import utils.function.Runnable;
 import utils.function.*;
 
@@ -61,7 +61,7 @@ public abstract class AbstractSlave implements SlaveType {
         args.add(javaCommand);
         args.add("-cp");
         args.add(Arrays.stream(getClassPath()).map(path -> libLocation + "/" + path).collect(Collectors.joining(":")));
-        args.add(SlaveProcessMain.class.getName());
+        args.add(ProcessMain.class.getName());
         args.addAll(Arrays.asList(getSlaveArgs()));
         return args.toArray(new String[0]);
     }
