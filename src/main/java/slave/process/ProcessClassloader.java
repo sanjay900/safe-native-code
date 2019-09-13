@@ -53,7 +53,6 @@ public class ProcessClassloader extends SecureClassLoader {
             }
             if (bytecodeSupplier == null || Arrays.stream(prohibited).anyMatch(name::matches))
                 return super.loadClass(name);
-            System.out.println(name);
             byte[] b = bytecodeSupplier.getByteCode(name);
             if (b == null) return super.loadClass(name);
             return super.defineClass(name, b, 0, b.length);
