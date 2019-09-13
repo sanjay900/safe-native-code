@@ -10,6 +10,6 @@ import java.rmi.RemoteException;
  */
 public class SlaveDeadException extends RemoteException {
     public SlaveDeadException(Slave slave) {
-        super("Error: SlaveType " + slave.toString() + " is not running.");
+        super("Error: Slave " + slave + " is not running.");
     }
 }
