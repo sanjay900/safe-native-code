@@ -111,7 +111,6 @@ public class Tests {
         }
     }
 
-
     @Test
     public void copyObject() throws IOException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         SlaveType first = construct();
