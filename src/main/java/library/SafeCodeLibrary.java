@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -53,7 +54,7 @@ public class SafeCodeLibrary extends ClassLoader {
     }
 
     private Set<String> loaded = new HashSet<>();
-
+    private HashMap<String, Class<?>> m = new HashMap<>();
     @Override
     public Class<?> loadClass(String name) throws ClassNotFoundException {
         if (!securing) {
@@ -61,6 +62,10 @@ public class SafeCodeLibrary extends ClassLoader {
             securing = true;
             preload();
             preloaded = true;
+        }
+        Class<?> c = findLoadedClass(name);
+        if (c != null) {
+            return c;
         }
         String className = name.replace(".", "/") + ".class";
         URL classLoc = super.getResource(className);
