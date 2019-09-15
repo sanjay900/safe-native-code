@@ -37,6 +37,9 @@ public class SafeCodeLibrary extends ClassLoader {
                 System.exit(1);
             }
         }
+        if (isWindows()) {
+            System.err.println("You appear to be using windows. We cannot guarantee the security of windows when using this program.");
+        }
         new ClassPreloader().preload(this, loaded);
         secure = true;
     }
