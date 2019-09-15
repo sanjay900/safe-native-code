@@ -1,4 +1,5 @@
 import compiler.JavaCompiler;
+import library.ClassLoadingDisabledException;
 import library.SafeCodeLibrary;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -150,7 +151,7 @@ public class Tests {
 
     @Test
     public void time() throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        int testCount = 20;
+        int testCount = 10;
         long expected = 49999995000000L;
         long totalTime = 0L;
         SlaveType slave = construct();
@@ -213,7 +214,6 @@ public class Tests {
     }
 
     @Test(expected = UnmarshalException.class)
-    @SuppressWarnings("deprecation")
     public void testSerialisation() throws Exception {
 
         JavaCompiler.compile(DYNAMIC_CODE, "Test");
@@ -226,6 +226,14 @@ public class Tests {
         RemoteObject<LocalAdder> la = s.call(LocalAdder::new);
         la.remove();
         la.get();
+    }
+    @Test
+    public void testSafety() throws Exception {
+        try {
+            Class.forName("NotRealClass");
+        } catch (ClassNotFoundException ex) {
+            Assert.assertEquals("library.ClassLoadingDisabledException", ex.getClass().getName());
+        }
     }
     static class TestException extends Exception {
 

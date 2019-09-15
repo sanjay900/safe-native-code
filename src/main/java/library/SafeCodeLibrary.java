@@ -6,19 +6,26 @@ import slave.Utils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 
 public class SafeCodeLibrary extends ClassLoader {
-    private boolean secure = false;
+    private boolean preloaded;
+    private boolean secure;
+    private boolean securing = false;
 
     public SafeCodeLibrary(ClassLoader parent) {
         super(parent);
+    }
+
+    private void preload() {
         //Mac is secure by default, and as a result does not have yama or prctl.
         if (isUnix() && !isMac()) {
-//            CLibrary.prctl(CLibrary.PR_SET_DUMPABLE, 0);
+            CLibrary.prctl(CLibrary.PR_SET_DUMPABLE, 0);
             try {
                 int yamaVer = Integer.parseInt(Files.readAllLines(Paths.get("/proc/sys/kernel/yama/ptrace_scope")).get(0));
                 if (yamaVer == 0) {
@@ -31,7 +38,7 @@ public class SafeCodeLibrary extends ClassLoader {
                 System.exit(1);
             }
         }
-        new ClassPreloader().preload();
+        new ClassPreloader().preload(this, loaded);
         secure = true;
     }
 
@@ -39,23 +46,32 @@ public class SafeCodeLibrary extends ClassLoader {
         static final int PR_SET_DUMPABLE = 4;
 
         static {
-//            Native.register("c");
+            Native.register("c");
         }
 
         public static native int prctl(int option, long arg2);
     }
 
+    private Set<String> loaded = new HashSet<>();
+
     @Override
     public Class<?> loadClass(String name) throws ClassNotFoundException {
-        if (secure && !name.startsWith("java.") && !name.startsWith("jdk.internal.") && !name.startsWith("javax.")) {
-            System.out.println(name);
-            throw new ClassNotFoundException("Class loading has been disabled for security reasons");
+        if (!securing) {
+            loaded.add(name);
+            securing = true;
+            preload();
+            preloaded = true;
+        }
+        String className = name.replace(".", "/") + ".class";
+        URL classLoc = super.getResource(className);
+        //jrt: = java9, java.home = java8
+        boolean isJava = classLoc != null && (name.startsWith("org.junit.") || name.startsWith("java.") || classLoc.toString().startsWith("jar:file:"+System.getProperty("java.home")) || classLoc.toString().startsWith("jrt:/java.compiler") || classLoc.toString().startsWith("jrt:/java.base"));
+        if (secure && !loaded.contains(name) && !isJava) {
+            throw new ClassLoadingDisabledException();
         }
         try {
-            if (!name.startsWith("java.") && !name.startsWith("org.junit.")) {
-//                 Reload these specific classes using this classloader instead of the app classloader.
-                String className = name.replace(".", "/") + ".class";
-                System.out.println(super.getClass().getClassLoader().getResource(className));
+            if (!isJava) {
+//              Reload these specific classes using this classloader instead of the app classloader.
                 InputStream is = getResourceAsStream(className);
                 if (is == null) {
                     throw new ClassNotFoundException("Unable to find: " + name);

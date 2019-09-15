@@ -1,6 +1,7 @@
 package preloader;
 
-import java.util.HashSet;
+import library.SafeCodeLibrary;
+
 import java.util.Set;
 
 public class ClassPreloader {
@@ -9,13 +10,25 @@ public class ClassPreloader {
 
 
     public ClassPreloader() {
-        this.loadedClasses = new HashSet<>();
         processor = new ClassPathProcessor();
     }
 
-    public void preload() {
+    public void preload(SafeCodeLibrary safeCodeLibrary, Set<String> loaded) {
+        this.loadedClasses = loaded;
         //Load all classes that the processor visits.
-        processor.handle();
+        processor.handle(classFile -> {
+            String className = classFile.getClassName();
+            if (!loadedClasses.contains(className)) {
+                loadedClasses.add(className);
+                //Try and load classes. Some classes will fail, this is normal as some libraries specify optional
+                //dependencies that we do not actually have.
+                try {
+                    Class.forName(className, false, safeCodeLibrary);
+                } catch (ClassNotFoundException | NoClassDefFoundError e) {
+                    e.printStackTrace();
+                }
+            }
+        });
         System.out.println("Preloaded " + loadedClasses.size() + " classes.");
     }
 }
