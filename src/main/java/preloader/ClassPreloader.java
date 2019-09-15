@@ -25,7 +25,6 @@ public class ClassPreloader {
                 try {
                     Class.forName(className, false, safeCodeLibrary);
                 } catch (ClassNotFoundException | NoClassDefFoundError e) {
-                    e.printStackTrace();
                 }
             }
         });

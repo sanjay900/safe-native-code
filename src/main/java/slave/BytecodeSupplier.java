@@ -31,7 +31,7 @@ public class BytecodeSupplier extends UnicastRemoteObject implements IBytecodeSu
                 try {
                     return Utils.readStream(is);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    throw new RuntimeException(e);
                 }
             }
         }
