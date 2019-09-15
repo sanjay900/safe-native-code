@@ -17,6 +17,11 @@ dependencies {
     compile group: 'net.java.dev.jna', name: 'jna', version: '5.4.0'
 }
 
+test {
+    jvmArgs '-Xshare:off'
+    systemProperty 'java.system.class.loader', 'library.SafeCodeLibrary'
+}
+
 shadowJar {
     baseName = 'safeNativeCode'
     classifier = null

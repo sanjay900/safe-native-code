@@ -15,18 +15,7 @@ public class ClassPreloader {
 
     public void preload() {
         //Load all classes that the processor visits.
-        processor.handle(classFile -> {
-            String className = classFile.getClassName();
-            if (!loadedClasses.contains(className)) {
-                loadedClasses.add(className);
-                //Try and load classes. Some classes will fail, this is normal as some libraries specify optional
-                //dependencies that we do not actually have.
-                try {
-                    Class.forName(className, false, ClassLoader.getSystemClassLoader());
-                } catch (ClassNotFoundException | NoClassDefFoundError ignored) {
-                }
-            }
-        });
+        processor.handle();
         System.out.println("Preloaded " + loadedClasses.size() + " classes.");
     }
 }

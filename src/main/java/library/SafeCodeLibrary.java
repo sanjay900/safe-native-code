@@ -3,11 +3,9 @@ package library;
 import com.sun.jna.Native;
 import preloader.ClassPreloader;
 import slave.Utils;
-import slave.process.ProcessMain;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -15,39 +13,12 @@ import java.util.Arrays;
 
 public class SafeCodeLibrary extends ClassLoader {
     private boolean secure = false;
-    private String[] prohibited = new String[]{
-            "java\\..*"
-    };
 
     public SafeCodeLibrary(ClassLoader parent) {
         super(parent);
-    }
-
-    private static boolean isSecure() {
-        try {
-            Class<?> c = SafeCodeLibrary.class;
-            Field f = c.getDeclaredField("secure");
-            f.setAccessible(true);
-            return f.getBoolean(ClassLoader.getSystemClassLoader());
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static class CLibrary {
-        static final int PR_SET_DUMPABLE = 4;
-
-        static {
-            Native.register("c");
-        }
-
-        public static native int prctl(int option, long arg2);
-    }
-
-    public static void secure() {
         //Mac is secure by default, and as a result does not have yama or prctl.
         if (isUnix() && !isMac()) {
-            CLibrary.prctl(CLibrary.PR_SET_DUMPABLE, 0);
+//            CLibrary.prctl(CLibrary.PR_SET_DUMPABLE, 0);
             try {
                 int yamaVer = Integer.parseInt(Files.readAllLines(Paths.get("/proc/sys/kernel/yama/ptrace_scope")).get(0));
                 if (yamaVer == 0) {
@@ -59,39 +30,32 @@ public class SafeCodeLibrary extends ClassLoader {
                 System.err.println("Error: " + e.getLocalizedMessage());
                 System.exit(1);
             }
-
-        }
-
-        if (isWindows()) {
-            System.out.println("You appear to be using windows. We cannot guarantee that windows is secure.");
         }
         new ClassPreloader().preload();
-        if (!(ClassLoader.getSystemClassLoader() instanceof SafeCodeLibrary)) {
-            System.out.println("You do not appear to be running this code using -Xshare:off -Djava.system.class.loader=library.SafeCodeLibrary.\n" +
-                               "We cannot guarantee the safety of your program.");
-            return;
+        secure = true;
+    }
+
+    private static class CLibrary {
+        static final int PR_SET_DUMPABLE = 4;
+
+        static {
+//            Native.register("c");
         }
-        //Use reflection to set secure, as we have multiple different classloaders at any time, and we have to gurantee the correct one is used.
-        try {
-            Class<?> c = ClassLoader.getSystemClassLoader().getParent().loadClass("library.SafeCodeLibrary");
-            Field f = c.getDeclaredField("secure");
-            f.setAccessible(true);
-            f.setBoolean(ClassLoader.getSystemClassLoader(), true);
-        } catch (NoSuchFieldException | ClassNotFoundException | IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
+
+        public static native int prctl(int option, long arg2);
     }
 
     @Override
     public Class<?> loadClass(String name) throws ClassNotFoundException {
-        System.out.println("LOADING: " + name);
-        if (isSecure()) {
-            throw new ClassNotFoundException("Unable to load class, class loading disabled");
+        if (secure && !name.startsWith("java.") && !name.startsWith("jdk.internal.") && !name.startsWith("javax.")) {
+            System.out.println(name);
+            throw new ClassNotFoundException("Class loading has been disabled for security reasons");
         }
         try {
-            if (Arrays.stream(prohibited).noneMatch(name::matches)) {
-                // Reload these specific classes using this classloader instead of the app classloader.
+            if (!name.startsWith("java.") && !name.startsWith("org.junit.")) {
+//                 Reload these specific classes using this classloader instead of the app classloader.
                 String className = name.replace(".", "/") + ".class";
+                System.out.println(super.getClass().getClassLoader().getResource(className));
                 InputStream is = getResourceAsStream(className);
                 if (is == null) {
                     throw new ClassNotFoundException("Unable to find: " + name);
@@ -118,13 +82,5 @@ public class SafeCodeLibrary extends ClassLoader {
 
     private static boolean isUnix() {
         return (OS.contains("nix") || OS.contains("nux") || OS.contains("aix"));
-    }
-
-
-    public static void main(String[] args) throws ClassNotFoundException {
-        System.out.println(ProcessMain.class.getClassLoader());
-        SafeCodeLibrary.secure();
-        System.out.println(SafeCodeLibrary.class.getClassLoader());
-        Class.forName("NotRealClass");
     }
 }

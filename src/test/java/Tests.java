@@ -53,11 +53,6 @@ public class Tests {
         }
     }
 
-    @BeforeClass
-    public static void init() {
-        SafeCodeLibrary.secure();
-    }
-
     @Test
     public void testCallAndGet() throws Exception {
         RemoteObject<Adder> c = construct().call(Adder::new);

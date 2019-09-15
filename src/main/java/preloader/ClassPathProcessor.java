@@ -5,11 +5,11 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 
 class ClassPathProcessor {
-    void handle(Consumer<ClassFile> consumer) {
+    void handle() {
         Arrays
                 .stream(System.getProperty("java.class.path").split(":"))
                 .map(s -> new File(s).toURI())
                 .distinct()
-                .forEach(element -> new ClassPathElement(element).handle(consumer));
+                .forEach(element -> new ClassPathElement(element).handle());
     }
 }
