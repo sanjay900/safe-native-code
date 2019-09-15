@@ -20,6 +20,7 @@ dependencies {
 test {
     jvmArgs '-Xshare:off'
     systemProperty 'java.system.class.loader', 'library.SafeCodeLibrary'
+    systemProperty 'junit', 'true'
 }
 
 shadowJar {
