@@ -54,7 +54,6 @@ public class SafeCodeLibrary extends ClassLoader {
     }
 
     private Set<String> loaded = new HashSet<>();
-    private HashMap<String, Class<?>> m = new HashMap<>();
     @Override
     public Class<?> loadClass(String name) throws ClassNotFoundException {
         if (!securing) {
@@ -70,7 +69,7 @@ public class SafeCodeLibrary extends ClassLoader {
         String className = name.replace(".", "/") + ".class";
         URL classLoc = super.getResource(className);
         //jrt: = java9, java.home = java8
-        //junit doesn't handle this right, so add an argument that skips junit classes if passed in.
+        //junit doesn't handle this right, nor does gradle, so add an argument that skips junit classes if passed in.
         boolean isJava = classLoc != null && ((!"true".equals(System.getProperty("testing")) || (name.startsWith("org.junit.") || name.contains("gradle"))) || name.startsWith("java.") || classLoc.toString().startsWith("jar:file:"+System.getProperty("java.home")) || classLoc.toString().startsWith("jrt:/java.compiler") || classLoc.toString().startsWith("jrt:/java.base"));
         if (secure && !loaded.contains(name) && !isJava) {
             throw new ClassLoadingDisabledException();
