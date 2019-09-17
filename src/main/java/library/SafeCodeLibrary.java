@@ -67,15 +67,14 @@ public class SafeCodeLibrary extends ClassLoader {
         if (c != null) {
             return c;
         }
-        String className = name.replace(".", "/") + ".class";
-        URL classLoc = super.getResource(className);
-        //junit doesn't handle this right, nor does gradle, so add an argument that skips junit classes if passed in.
-        boolean isProhibited = classLoc != null && ((!"true".equals(System.getProperty("testing")) || (name.startsWith("org.junit.") || name.contains("gradle"))) || Utils.isJavaClass(name));
+        //Skip specific junit classes that don't correctly handle reloading, or java classes.
+        boolean isProhibited = Utils.isTestingClass(name) || Utils.isJavaClass(name);
         if (secure && !loaded.contains(name) && !isProhibited) {
             throw new ClassLoadingDisabledException();
         }
         try {
             if (!isProhibited) {
+                String className = name.replace(".", "/") + ".class";
                 InputStream is = getResourceAsStream(className);
                 if (is == null) {
                     throw new ClassNotFoundException("Unable to find: " + name);

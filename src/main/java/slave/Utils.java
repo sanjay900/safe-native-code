@@ -22,4 +22,8 @@ public class Utils {
         //jrt: = java9, java.home = java8
         return classLoc != null && (name.startsWith("java.") || classLoc.toString().startsWith("jar:file:" + System.getProperty("java.home")) || classLoc.toString().startsWith("jrt:/java.compiler") || classLoc.toString().startsWith("jrt:/java.base"));
     }
+
+    public static boolean isTestingClass(String name) {
+        return (!"true".equals(System.getProperty("testing")) || (name.equals("org.junit.runners.Parameterized") || name.equals("org.junit.runner.RunWith") || name.equals("org.junit.Test") || name.contains("gradle")));
+    }
 }

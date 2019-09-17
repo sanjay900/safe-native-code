@@ -23,7 +23,7 @@ public class ClassPreloader {
                 //Try and load classes. Some classes will fail, this is normal as some libraries specify optional
                 //dependencies that we do not actually have.
                 try {
-                    Class.forName(className, false, safeCodeLibrary);
+                    Class.forName(className, true, safeCodeLibrary);
                 } catch (ClassNotFoundException | NoClassDefFoundError e) {
                 }
             }
