@@ -6,7 +6,6 @@ import slave.Utils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashSet;
@@ -68,21 +67,21 @@ public class SafeCodeLibrary extends ClassLoader {
             return c;
         }
         //Skip specific junit classes that don't correctly handle reloading, or java classes.
-        boolean isProhibited = Utils.isTestingClass(name) || Utils.isJavaClass(name);
-        if (secure && !loaded.contains(name) && !isProhibited) {
+        //Junit classes are only ignored when -Dtesting=true is passed as an argument however,
+        if (Utils.isTestingClass(name) || Utils.isJavaClass(name)) {
+            return super.loadClass(name);
+        }
+        if (secure && !loaded.contains(name)) {
             throw new ClassLoadingDisabledException();
         }
         try {
-            if (!isProhibited) {
-                String className = name.replace(".", "/") + ".class";
-                InputStream is = getResourceAsStream(className);
-                if (is == null) {
-                    throw new ClassNotFoundException("Unable to find: " + name);
-                }
-                byte[] b = Utils.readStream(is);
-                return super.defineClass(name, b, 0, b.length);
+            String className = name.replace(".", "/") + ".class";
+            InputStream is = getResourceAsStream(className);
+            if (is == null) {
+                throw new ClassNotFoundException("Unable to find: " + name);
             }
-            return super.loadClass(name);
+            byte[] b = Utils.readStream(is);
+            return super.defineClass(name, b, 0, b.length);
         } catch (IOException e) {
             // If we lose connection to the main JVM, just throw a class not found exception.
             throw new ClassNotFoundException("Unable to load: " + name, e);
