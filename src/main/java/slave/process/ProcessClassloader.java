@@ -5,6 +5,7 @@ import slave.Utils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.security.SecureClassLoader;
 import java.util.Arrays;
 import java.util.List;
@@ -14,19 +15,10 @@ import java.util.List;
  */
 public class ProcessClassloader extends SecureClassLoader {
     private static IBytecodeSupplier bytecodeSupplier;
-    //We need a list of prohibited classes, as we cannot recreate anything under the java package, or jdk.internal.reflect.SerializationConstructorAccessorImpl
-    //Java automatically handles limiting access to creating anything in the java package, so we are free to match anything there.
-    //We also have to avoid proxying slave.RemoteObject and slave.Slave, as directJVM will initialize them first with a different classloader.
     private String[] prohibited = new String[]{
-            "java\\..*",
             "slave.RemoteObject",
             "slave.Slave",
             "slave.IBytecodeSupplier",
-            "slave.process.ProcessClassLoader",
-            "jdk.internal.reflect.SerializationConstructorAccessorImpl",
-            "jdk.internal.reflect.MethodAccessorImpl",
-            "sun.reflect.SerializationConstructorAccessorImpl",
-            "sun.reflect.MethodAccessorImpl",
             "slave.Functions(\\$.*)?",
     };
     //A list of classes that we need to load using a ProcessClassloader.
@@ -43,9 +35,9 @@ public class ProcessClassloader extends SecureClassLoader {
     @Override
     public Class<?> loadClass(String name) throws ClassNotFoundException {
         try {
+            String className = name.replace(".", "/") + ".class";
             if (forced.contains(name)) {
                 // Reload these specific classes using this classloader instead of the app classloader.
-                String className = name.replace(".", "/") + ".class";
                 InputStream is = getResourceAsStream(className);
                 if (is == null) {
                     throw new ClassNotFoundException("Unable to find: " + name);
@@ -53,7 +45,8 @@ public class ProcessClassloader extends SecureClassLoader {
                 byte[] b = Utils.readStream(is);
                 return super.defineClass(name, b, 0, b.length);
             }
-            if (bytecodeSupplier == null || Arrays.stream(prohibited).anyMatch(name::matches))
+            boolean isJava = Utils.isJavaClass(name);
+            if (bytecodeSupplier == null || Arrays.stream(prohibited).anyMatch(name::matches) || isJava)
                 return super.loadClass(name);
             byte[] b = bytecodeSupplier.getByteCode(name);
             if (b == null) return super.loadClass(name);

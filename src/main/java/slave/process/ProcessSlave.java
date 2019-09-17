@@ -186,14 +186,14 @@ public class ProcessSlave extends UnicastRemoteObject implements Process {
 
     @SuppressWarnings("unchecked")
     public <T> T get(RemoteObject<T> obj) throws UnknownObjectException {
-        if (!(obj instanceof ProcessObject) || !localObjects.containsKey(obj)) {
+        if (!localObjects.containsKey(obj)) {
             throw new UnknownObjectException();
         }
         return (T) localObjects.get(obj);
     }
 
     public void remove(RemoteObject obj) throws UnknownObjectException {
-        if (!(obj instanceof ProcessObject) || !localObjects.containsKey(obj)) {
+        if (!localObjects.containsKey(obj)) {
             throw new UnknownObjectException();
         }
         localObjects.remove(obj);

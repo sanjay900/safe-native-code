@@ -1,8 +1,5 @@
 import compiler.JavaCompiler;
-import library.ClassLoadingDisabledException;
-import library.SafeCodeLibrary;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -227,6 +224,7 @@ public class Tests {
         la.remove();
         la.get();
     }
+
     @Test
     public void testSafety() throws Exception {
         try {
@@ -235,14 +233,19 @@ public class Tests {
             Assert.assertEquals("library.ClassLoadingDisabledException", ex.getClass().getName());
         }
     }
+
     static class TestException extends Exception {
 
     }
+
     @Test(expected = SlaveException.class)
     public void testExceptions() throws Exception {
         SlaveType s = construct();
-        s.call(()-> {throw new TestException();});
+        s.call(() -> {
+            throw new TestException();
+        });
     }
+
     @Test(expected = TestException.class)
     public void testException2() throws Throwable {
         SlaveType s = construct();

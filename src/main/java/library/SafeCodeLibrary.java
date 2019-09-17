@@ -69,15 +69,13 @@ public class SafeCodeLibrary extends ClassLoader {
         }
         String className = name.replace(".", "/") + ".class";
         URL classLoc = super.getResource(className);
-        //jrt: = java9, java.home = java8
         //junit doesn't handle this right, nor does gradle, so add an argument that skips junit classes if passed in.
-        boolean isJava = classLoc != null && ((!"true".equals(System.getProperty("testing")) || (name.startsWith("org.junit.") || name.contains("gradle"))) || name.startsWith("java.") || classLoc.toString().startsWith("jar:file:" + System.getProperty("java.home")) || classLoc.toString().startsWith("jrt:/java.compiler") || classLoc.toString().startsWith("jrt:/java.base"));
-        if (secure && !loaded.contains(name) && !isJava) {
+        boolean isProhibited = classLoc != null && ((!"true".equals(System.getProperty("testing")) || (name.startsWith("org.junit.") || name.contains("gradle"))) || Utils.isJavaClass(name));
+        if (secure && !loaded.contains(name) && !isProhibited) {
             throw new ClassLoadingDisabledException();
         }
         try {
-            if (!isJava) {
-//              Reload these specific classes using this classloader instead of the app classloader.
+            if (!isProhibited) {
                 InputStream is = getResourceAsStream(className);
                 if (is == null) {
                     throw new ClassNotFoundException("Unable to find: " + name);
