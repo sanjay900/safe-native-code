@@ -25,6 +25,8 @@ public class ProcessClassloader extends SecureClassLoader {
             "slave.process.ProcessClassLoader",
             "jdk.internal.reflect.SerializationConstructorAccessorImpl",
             "jdk.internal.reflect.MethodAccessorImpl",
+            "sun.reflect.SerializationConstructorAccessorImpl",
+            "sun.reflect.MethodAccessorImpl",
             "slave.Functions(\\$.*)?",
     };
     //A list of classes that we need to load using a ProcessClassloader.
