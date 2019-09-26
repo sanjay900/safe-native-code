@@ -1,10 +1,10 @@
 package slave.process;
 
 import slave.Functions;
-import slave.RemoteObject;
 import slave.IBytecodeSupplier;
-import slave.exceptions.UnknownObjectException;
+import slave.RemoteObject;
 import slave.exceptions.SlaveException;
+import slave.exceptions.UnknownObjectException;
 
 import java.io.IOException;
 import java.rmi.NotBoundException;
@@ -25,7 +25,6 @@ public class ProcessSlave extends UnicastRemoteObject implements Process {
 
     public ProcessSlave(int registryPort) throws IOException, InterruptedException, NotBoundException {
         Registry registry = LocateRegistry.createRegistry(registryPort);
-
         while (!Arrays.asList(registry.list()).contains("bytecodeLookup")) {
             Thread.sleep(10);
         }

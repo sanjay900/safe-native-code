@@ -58,6 +58,8 @@ public abstract class AbstractSlave implements SlaveType {
     String[] getJavaCommandArgs(String javaCommand, String libLocation) {
         List<String> args = new ArrayList<>();
         args.add(javaCommand);
+        args.add("-Xshare:off");
+        args.add("-Djava.system.class.loader=slave.process.ProcessClassloader");
         args.add("-cp");
         args.add(Arrays.stream(getClassPath()).map(path -> libLocation + "/" + path).collect(Collectors.joining(":")));
         args.add(ProcessMain.class.getName());

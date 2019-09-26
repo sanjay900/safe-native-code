@@ -6,7 +6,6 @@ import org.junit.runners.Parameterized;
 import slave.RemoteObject;
 import slave.exceptions.SlaveException;
 import slave.exceptions.UnknownObjectException;
-import slave.types.DirectSlave;
 import slave.types.DockerSlave;
 import slave.types.ProcessSlave;
 import slave.types.SlaveType;
@@ -33,7 +32,7 @@ public class Tests {
     @Parameterized.Parameters(name = "SlaveType: {1}")
     public static Iterable<Object[]> data() {
         return Stream
-                .of(DirectSlave.class, ProcessSlave.class, DockerSlave.class)
+                .of(ProcessSlave.class, DockerSlave.class)
                 .map(s -> new Object[]{s, s.getSimpleName()})
                 .collect(Collectors.toList());
     }
@@ -177,9 +176,6 @@ public class Tests {
 
     @Test
     public void testStopping() throws Exception {
-        if (clazz == DirectSlave.class) {
-            return;
-        }
         SlaveType slave = construct();
         slave.terminate();
         Assert.assertFalse(slave.isAlive());
@@ -187,9 +183,6 @@ public class Tests {
 
     @Test
     public void testCrashing() throws Exception {
-        if (clazz == DirectSlave.class) {
-            return;
-        }
         SlaveType slave = construct();
         try {
             slave.run(() -> System.exit(1));
@@ -202,9 +195,6 @@ public class Tests {
 
     @Test
     public void testKilling() throws Exception {
-        if (clazz == DirectSlave.class) {
-            return;
-        }
         SlaveType slave = construct();
         slave.terminate();
         Assert.assertFalse(slave.isAlive());
