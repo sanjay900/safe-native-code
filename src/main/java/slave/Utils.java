@@ -24,6 +24,6 @@ public class Utils {
     }
 
     public static boolean isTestingClass(String name) {
-        return (!"true".equals(System.getProperty("testing")) || (name.equals("org.junit.runners.Parameterized") || name.equals("org.junit.runner.RunWith") || name.equals("org.junit.Test") || name.contains("gradle")));
+        return (!"true".equals(System.getProperty("testing")) || (name.startsWith("org.junit.runners.Parameterized") || name.equals("org.junit.runner.RunWith") || name.equals("org.junit.Test") || name.contains("gradle")));
     }
 }
