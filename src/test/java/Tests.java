@@ -109,12 +109,12 @@ public class Tests {
         SlaveType first = construct();
         SlaveType second = construct();
         RemoteObject<LocalAdder> c = first.call(LocalAdder::new);
-        Assert.assertEquals(c.call(t -> t.addToBase(5)).get(), 15, 0);
+        Assert.assertEquals(15, c.call(adder -> adder.addToBase(5)).get(), 0);
         RemoteObject<LocalAdder> c2 = second.copy(c);
-        c2.run(s -> s.setBase(15));
+        c2.run(adder -> adder.setBase(15));
         //Since we copied the object, the original object should not be modified in the process.
-        Assert.assertEquals(c.call(t -> t.addToBase(5)).get(), 15, 0);
-        Assert.assertEquals(c2.call(t -> t.addToBase(5)).get(), 20, 0);
+        Assert.assertEquals(15, c.call(adder -> adder.addToBase(5)).get(), 0);
+        Assert.assertEquals(20, c2.call(adder -> adder.addToBase(5)).get(), 0);
     }
 
     public static class TimingTest implements Serializable {
