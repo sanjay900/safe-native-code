@@ -1,24 +1,9 @@
-import compiler.JavaCompiler;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import slave.RemoteObject;
-import slave.exceptions.SlaveException;
-import slave.exceptions.UnknownObjectException;
-import slave.types.DockerSlave;
-import slave.types.ProcessSlave;
-import slave.types.SlaveType;
 
-import java.io.IOException;
 import java.io.Serializable;
-import java.lang.reflect.InvocationTargetException;
-import java.rmi.RemoteException;
-import java.rmi.UnmarshalException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class TestsDirect {
 

@@ -8,7 +8,7 @@ import slave.exceptions.SlaveException;
 import slave.exceptions.UnknownObjectException;
 import slave.types.DockerSlave;
 import slave.types.ProcessSlave;
-import slave.types.SlaveType;
+import slave.Slave;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -23,9 +23,9 @@ import java.util.stream.Stream;
 @RunWith(Parameterized.class)
 public class Tests {
     private static String DYNAMIC_CODE = "public class Test implements java.io.Serializable {String getData() {return \"test\";}}";
-    private Class<? extends SlaveType> clazz;
+    private Class<? extends Slave> clazz;
 
-    public Tests(Class<? extends SlaveType> clazz, String name) {
+    public Tests(Class<? extends Slave> clazz, String name) {
         this.clazz = clazz;
     }
 
@@ -37,7 +37,7 @@ public class Tests {
                 .collect(Collectors.toList());
     }
 
-    private SlaveType construct(ClassLoader... loaders) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+    private Slave construct(ClassLoader... loaders) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         if (loaders.length == 0) {
             loaders = new ClassLoader[]{JavaCompiler.getClassLoader()};
         }
@@ -71,7 +71,7 @@ public class Tests {
 
     @Test
     public void testMultipleSlaves() throws IOException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-        SlaveType slave = construct();
+        Slave slave = construct();
         RemoteObject<A> aWith3 = slave.call(() -> new A(3));
         RemoteObject<A> aWith5 = slave.call(() -> new A(5));
         RemoteObject<A> aWith3Plus5 = slave.call(aWith3, aWith5, A::another);
@@ -84,8 +84,8 @@ public class Tests {
 
     @Test(expected = UnknownObjectException.class)
     public void testIncorrectRemoteBackend() throws IOException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-        SlaveType first = construct();
-        SlaveType second = construct();
+        Slave first = construct();
+        Slave second = construct();
         //Start two Slaves, and then try to use an object with an incorrect slave
         RemoteObject<LocalAdder> c = first.call(LocalAdder::new);
         second.call(c, c2 -> c2);
@@ -105,8 +105,8 @@ public class Tests {
 
     @Test
     public void copyObject() throws IOException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-        SlaveType first = construct();
-        SlaveType second = construct();
+        Slave first = construct();
+        Slave second = construct();
         RemoteObject<LocalAdder> c = first.call(LocalAdder::new);
         Assert.assertEquals(15, c.call(adder -> adder.addToBase(5)).get(), 0);
         RemoteObject<LocalAdder> c2 = second.copy(c);
@@ -150,7 +150,7 @@ public class Tests {
         int testCount = 10;
         long expected = 49999995000000L;
         long totalTime = 0L;
-        SlaveType slave = construct();
+        Slave slave = construct();
         for (int i = 0; i < testCount + 5; i++) {
             Instant start = Instant.now();
             RemoteObject<TimingTest> test = slave.call(TimingTest::new);
@@ -176,14 +176,14 @@ public class Tests {
 
     @Test
     public void testStopping() throws Exception {
-        SlaveType slave = construct();
+        Slave slave = construct();
         slave.terminate();
         Assert.assertFalse(slave.isAlive());
     }
 
     @Test
     public void testCrashing() throws Exception {
-        SlaveType slave = construct();
+        Slave slave = construct();
         try {
             slave.run(() -> System.exit(1));
         } catch (RemoteException ignored) {
@@ -195,7 +195,7 @@ public class Tests {
 
     @Test
     public void testKilling() throws Exception {
-        SlaveType slave = construct();
+        Slave slave = construct();
         slave.terminate();
         Assert.assertFalse(slave.isAlive());
     }
@@ -209,7 +209,7 @@ public class Tests {
 
     @Test(expected = UnknownObjectException.class)
     public void testDeletion() throws Exception {
-        SlaveType s = construct();
+        Slave s = construct();
         RemoteObject<LocalAdder> la = s.call(LocalAdder::new);
         la.remove();
         la.get();
@@ -230,7 +230,7 @@ public class Tests {
 
     @Test(expected = SlaveException.class)
     public void testExceptions() throws Exception {
-        SlaveType s = construct();
+        Slave s = construct();
         s.call(() -> {
             throw new TestException();
         });
@@ -238,7 +238,7 @@ public class Tests {
 
     @Test(expected = TestException.class)
     public void testException2() throws Throwable {
-        SlaveType s = construct();
+        Slave s = construct();
         try {
             s.call(() -> {
                 throw new TestException();

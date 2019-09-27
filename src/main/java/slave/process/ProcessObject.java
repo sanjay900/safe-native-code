@@ -1,7 +1,7 @@
 package slave.process;
 
 import slave.RemoteObject;
-import slave.Slave;
+import slave.SlaveInternal;
 import slave.Functions;
 
 import java.rmi.RemoteException;
@@ -30,7 +30,7 @@ public class ProcessObject<T> implements RemoteObject<T> {
     }
 
 
-    public RemoteObject<T> copyTo(Slave slave) throws RemoteException {
+    public RemoteObject<T> copyTo(SlaveInternal slave) throws RemoteException {
         return slave.copy(this);
     }
 

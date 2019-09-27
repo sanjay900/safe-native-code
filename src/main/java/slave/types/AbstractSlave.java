@@ -1,9 +1,6 @@
 package slave.types;
 
-import slave.BytecodeSupplier;
-import slave.Functions;
-import slave.RemoteObject;
-import slave.Slave;
+import slave.*;
 import slave.exceptions.SlaveDeadException;
 import slave.process.ProcessMain;
 
@@ -13,6 +10,7 @@ import java.net.ServerSocket;
 import java.nio.file.Paths;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.UnmarshalException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
@@ -24,8 +22,8 @@ import java.util.stream.Collectors;
 /**
  * A AbstractSlave is used when we have a server that executes code in a slave process somewhere.
  */
-public abstract class AbstractSlave implements SlaveType {
-    private Slave slave;
+public abstract class AbstractSlave implements Slave {
+    private SlaveInternal slave;
     private int registryPort;
     private ClassLoader[] classLoaders;
 
@@ -97,9 +95,9 @@ public abstract class AbstractSlave implements SlaveType {
         }
         while (true) {
             try {
-                slave = (Slave) registry.lookup("slave/process");
+                slave = (SlaveInternal) registry.lookup("slave/process");
                 break;
-            } catch (NotBoundException e) {
+            } catch (NotBoundException | UnmarshalException e) {
                 Thread.sleep(10);
             }
         }

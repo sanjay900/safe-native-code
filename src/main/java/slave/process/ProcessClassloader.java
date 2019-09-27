@@ -22,7 +22,7 @@ public class ProcessClassloader extends SecureClassLoader {
             ProcessObject.class.getName(),
             ProcessSlave.class.getName(),
             ProcessMain.class.getName(),
-            Slave.class.getName(),
+            SlaveInternal.class.getName(),
             RemoteObject.class.getName(),
             SlaveException.class.getName()
     );
