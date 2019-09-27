@@ -84,7 +84,7 @@ public class Tests {
     }
 
     @Test(expected = UnknownObjectException.class)
-    public void testIncorrectRemoteBackend() throws IOException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+    public void testIncorrectSlave() throws IOException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         Slave first = construct();
         Slave second = construct();
         //Start two Slaves, and then try to use an object with an incorrect slave
@@ -105,7 +105,7 @@ public class Tests {
     }
 
     @Test
-    public void copyObject() throws IOException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+    public void testCopyObject() throws IOException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         Slave first = construct();
         Slave second = construct();
         RemoteObject<LocalAdder> c = first.call(LocalAdder::new);
@@ -147,7 +147,7 @@ public class Tests {
     }
 
     @Test
-    public void time() throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+    public void timeExecution() throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         int testCount = 10;
         long expected = 49999995000000L;
         long totalTime = 0L;
