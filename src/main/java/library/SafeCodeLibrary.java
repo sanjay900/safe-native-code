@@ -54,6 +54,19 @@ public class SafeCodeLibrary extends ClassLoader {
     }
 
     private Set<String> loaded = new HashSet<>();
+    private ClassNotFoundException disabled;
+
+    //We can't just throw a ClassLoadingDisabledException, since we need the exception to be loaded using this classloader. Load it again.
+    private ClassNotFoundException getDisabledException() {
+        if (disabled == null) {
+            try {
+                disabled = (ClassNotFoundException) loadClass(ClassLoadingDisabledException.class.getName()).newInstance();
+            } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return disabled;
+    }
 
     @Override
     public Class<?> loadClass(String name) throws ClassNotFoundException {
@@ -72,7 +85,7 @@ public class SafeCodeLibrary extends ClassLoader {
             return super.loadClass(name);
         }
         if (secure && !loaded.contains(name)) {
-            throw new ClassLoadingDisabledException();
+            throw getDisabledException();
         }
         try {
             String className = name.replace(".", "/") + ".class";

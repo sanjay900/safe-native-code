@@ -1,14 +1,15 @@
 import compiler.JavaCompiler;
+import library.ClassLoadingDisabledException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import slave.RemoteObject;
+import slave.Slave;
 import slave.exceptions.SlaveException;
 import slave.exceptions.UnknownObjectException;
 import slave.types.DockerSlave;
 import slave.types.ProcessSlave;
-import slave.Slave;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -201,8 +202,8 @@ public class Tests {
     }
 
     @Test(expected = UnmarshalException.class)
-    public void testSerialisation() throws Exception {
-
+    public void testUnknownSerialisation() throws Exception {
+        //We expect to not be able to retrieve this object back, as RMI has no idea that the Test object exists
         JavaCompiler.compile(DYNAMIC_CODE, "Test");
         Assert.assertEquals("test", construct().call(() -> Class.forName("Test").newInstance()).get());
     }
@@ -215,13 +216,9 @@ public class Tests {
         la.get();
     }
 
-    @Test
+    @Test(expected = ClassLoadingDisabledException.class)
     public void testSafety() throws Exception {
-        try {
-            Class.forName("NotRealClass");
-        } catch (ClassNotFoundException ex) {
-            Assert.assertEquals("library.ClassLoadingDisabledException", ex.getClass().getName());
-        }
+        Class.forName("NotRealClass");
     }
 
     static class TestException extends Exception {
@@ -229,7 +226,7 @@ public class Tests {
     }
 
     @Test(expected = SlaveException.class)
-    public void testExceptions() throws Exception {
+    public void testException() throws Exception {
         Slave s = construct();
         s.call(() -> {
             throw new TestException();
@@ -237,7 +234,7 @@ public class Tests {
     }
 
     @Test(expected = TestException.class)
-    public void testException2() throws Throwable {
+    public void testExceptionAndCatch() throws Throwable {
         Slave s = construct();
         try {
             s.call(() -> {
