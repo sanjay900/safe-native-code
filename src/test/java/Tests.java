@@ -71,7 +71,7 @@ public class Tests {
     }
 
     @Test
-    public void testMultipleSlaves() throws IOException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+    public void testMultipleObjects() throws IOException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         Slave slave = construct();
         RemoteObject<A> aWith3 = slave.call(() -> new A(3));
         RemoteObject<A> aWith5 = slave.call(() -> new A(5));
