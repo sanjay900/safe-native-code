@@ -21,7 +21,6 @@ public class ProcessClassloader extends SecureClassLoader {
             Process.class.getName(),
             ProcessObject.class.getName(),
             ProcessSlave.class.getName(),
-            ProcessMain.class.getName(),
             SlaveInternal.class.getName(),
             RemoteObject.class.getName(),
             SlaveException.class.getName()

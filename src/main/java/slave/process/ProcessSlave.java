@@ -208,4 +208,8 @@ public class ProcessSlave extends UnicastRemoteObject implements Process {
         localObjects.put(r, object);
         return r;
     }
+
+    public static void main(String[] args) throws InterruptedException, NotBoundException, IOException {
+        new ProcessSlave(Integer.parseInt(args[args.length - 1]));
+    }
 }

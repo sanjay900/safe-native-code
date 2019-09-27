@@ -2,7 +2,6 @@ package slave.types;
 
 import slave.*;
 import slave.exceptions.SlaveDeadException;
-import slave.process.ProcessMain;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -60,7 +59,7 @@ public abstract class AbstractSlave implements Slave {
         args.add("-Djava.system.class.loader=slave.process.ProcessClassloader");
         args.add("-cp");
         args.add(Arrays.stream(getClassPath()).map(path -> libLocation + "/" + path).collect(Collectors.joining(":")));
-        args.add(ProcessMain.class.getName());
+        args.add(slave.process.ProcessSlave.class.getName());
         args.addAll(Arrays.asList(getSlaveArgs()));
         return args.toArray(new String[0]);
     }
