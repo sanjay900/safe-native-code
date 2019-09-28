@@ -26,6 +26,7 @@ public class Tests {
     private static String DYNAMIC_CODE = "public class Test implements java.io.Serializable {String getData() {return \"test\";}}";
     private Class<? extends Slave> clazz;
 
+    @SuppressWarnings("unused")
     public Tests(Class<? extends Slave> clazz, String name) {
         this.clazz = clazz;
     }
@@ -117,7 +118,7 @@ public class Tests {
         Assert.assertEquals(20, c2.call(adder -> adder.addToBase(5)).get(), 0);
     }
 
-    public static class TimingTest implements Serializable {
+    static class TimingTest implements Serializable {
         long local = 0;
 
         void addAll() {
@@ -131,20 +132,20 @@ public class Tests {
         }
     }
 
-    @Test
-    public void timeConstruction() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-        int testCount = 20;
-        long totalTime = 0L;
-        for (int i = 0; i < testCount + 5; i++) {
-            Instant start = Instant.now();
-            construct();
-            Instant end = Instant.now();
-            if (i > 5) {
-                totalTime += Duration.between(start, end).toMillis();
-            }
-        }
-        System.out.println("Time taken to construct: " + totalTime / testCount);
-    }
+//    @Test
+//    public void timeConstruction() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+//        int testCount = 20;
+//        long totalTime = 0L;
+//        for (int i = 0; i < testCount + 5; i++) {
+//            Instant start = Instant.now();
+//            construct();
+//            Instant end = Instant.now();
+//            if (i > 5) {
+//                totalTime += Duration.between(start, end).toMillis();
+//            }
+//        }
+//        System.out.println("Time taken to construct: " + totalTime / testCount);
+//    }
 
     @Test
     public void timeExecution() throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
@@ -221,7 +222,7 @@ public class Tests {
         Class.forName("NotRealClass");
     }
 
-    static class TestException extends Exception {
+    private static class TestException extends Exception {
 
     }
 

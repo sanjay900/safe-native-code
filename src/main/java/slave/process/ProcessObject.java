@@ -56,7 +56,6 @@ public class ProcessObject<T> implements RemoteObject<T> {
         return Objects.hash(uuid);
     }
 
-    @SuppressWarnings("deprecation")
     protected void finalize() throws RemoteException {
         this.remove();
     }

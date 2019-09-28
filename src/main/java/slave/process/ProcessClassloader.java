@@ -32,7 +32,6 @@ public class ProcessClassloader extends SecureClassLoader {
 
     @Override
     public Class<?> loadClass(String name) throws ClassNotFoundException {
-        if (name.equals(getClass().getName())) return getClass();
         try {
             String className = name.replace(".", "/") + ".class";
             for (String s : forced) {
