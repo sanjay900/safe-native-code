@@ -3,7 +3,9 @@ package safeNativeCode.slave.host;
 import safeNativeCode.utils.Utils;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -37,9 +39,20 @@ public class DockerSlave extends AbstractSlave {
         super(classLoaders);
         //Pull first so we can easily get status
         new ProcessBuilder("docker", "pull", DOCKER_IMAGE).inheritIO().start().waitFor();
+
         List<String> args = new ArrayList<>(Arrays.asList("docker", "create", "--rm", "--network", "host"));
+        if (Utils.isUnix()) {
+            String username = System.getProperty("user.name");
+            String uid = new String(Utils.readStream(Runtime.getRuntime().exec("id -u " + username).getInputStream())).trim();
+            String gid = new String(Utils.readStream(Runtime.getRuntime().exec("id -g " + username).getInputStream())).trim();
+            args.addAll(Arrays.asList("--user", uid + ":" + gid));
+        } else {
+            args.addAll(Arrays.asList("--user", System.getProperty("user.name")));
+        }
         for (String cp : getClassPath()) {
-            args.addAll(Arrays.asList("-v", cp + ":/safeNativeCode/" + cp));
+            if (Files.exists(Paths.get(cp))) {
+                args.addAll(Arrays.asList("-v", cp + ":/safeNativeCode/" + cp + ":ro"));
+            }
         }
         pathsToShare.forEach(path -> {
             String p = path.toAbsolutePath().toString();

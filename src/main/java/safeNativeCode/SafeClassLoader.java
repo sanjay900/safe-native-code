@@ -1,8 +1,8 @@
 package safeNativeCode;
 
 import com.sun.jna.Native;
-import safeNativeCode.preloader.ClassPreloader;
 import safeNativeCode.exceptions.ClassLoadingDisabledException;
+import safeNativeCode.preloader.ClassPreloader;
 import safeNativeCode.utils.Utils;
 
 import java.io.IOException;
@@ -11,6 +11,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
+
+import static safeNativeCode.utils.Utils.*;
 
 
 public class SafeClassLoader extends ClassLoader {
@@ -100,19 +102,5 @@ public class SafeClassLoader extends ClassLoader {
             // If we lose connection to the main JVM, just throw a class not found exception.
             throw new ClassNotFoundException("Unable to load: " + name, e);
         }
-    }
-
-    private static String OS = System.getProperty("os.name").toLowerCase();
-
-    private static boolean isWindows() {
-        return OS.contains("win");
-    }
-
-    private static boolean isMac() {
-        return OS.contains("mac");
-    }
-
-    private static boolean isUnix() {
-        return (OS.contains("nix") || OS.contains("nux") || OS.contains("aix"));
     }
 }
