@@ -56,7 +56,7 @@ public class DockerSlave extends AbstractSlave {
             System.out.println(error);
             return;
         }
-        this.process = new ProcessBuilder("docker", "start", "-a", containerID).inheritIO().start();
+        this.process = new ProcessBuilder("docker", "start", "-a", "-i", containerID).inheritIO().start();
         setupRegistry();
     }
 
