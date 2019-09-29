@@ -1,6 +1,6 @@
-package slave.exceptions;
+package safeNativeCode.exceptions;
 
-import slave.RemoteObject;
+import safeNativeCode.slave.RemoteObject;
 
 public class SlaveException extends RuntimeException {
     private RemoteObject<Throwable> child;

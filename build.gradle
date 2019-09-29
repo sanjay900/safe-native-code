@@ -19,7 +19,7 @@ dependencies {
 
 test {
     jvmArgs '-Xshare:off'
-    systemProperty 'java.system.class.loader', 'library.SafeCodeLibrary'
+    systemProperty 'java.system.class.loader', 'safeNativeCode.SafeClassLoader'
     systemProperty 'testing', 'true'
 }
 

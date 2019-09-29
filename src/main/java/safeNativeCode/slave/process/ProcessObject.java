@@ -1,21 +1,22 @@
-package slave.process;
+package safeNativeCode.slave.process;
 
-import slave.RemoteObject;
-import slave.SlaveInternal;
-import slave.Functions;
+import safeNativeCode.slave.Functions;
+import safeNativeCode.slave.RemoteObject;
+import safeNativeCode.slave.Slave;
+import safeNativeCode.slave.InternalSlave;
 
 import java.rmi.RemoteException;
 import java.util.Objects;
 import java.util.UUID;
 
 /**
- * ProcessObject represents an object on a slave
+ * ProcessObject represents an object on a safeNativeCode.slave
  */
 public class ProcessObject<T> implements RemoteObject<T> {
     private UUID uuid;
-    private Process slave;
+    private InternalSlave slave;
 
-    ProcessObject(Process remote) {
+    ProcessObject(InternalSlave remote) {
         this.uuid = UUID.randomUUID();
         this.slave = remote;
     }
@@ -30,7 +31,7 @@ public class ProcessObject<T> implements RemoteObject<T> {
     }
 
 
-    public RemoteObject<T> copyTo(SlaveInternal slave) throws RemoteException {
+    public RemoteObject<T> copyTo(Slave slave) throws RemoteException {
         return slave.copy(this);
     }
 

@@ -1,5 +1,7 @@
-package slave;
+package safeNativeCode.slave.host;
 
+
+import safeNativeCode.utils.Utils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,10 +13,10 @@ import java.rmi.server.UnicastRemoteObject;
 /**
  * An object that is responsible for replying to requests for information about classes
  */
-public class BytecodeSupplier extends UnicastRemoteObject implements IBytecodeSupplier {
+public class ClassSupplier extends UnicastRemoteObject implements IClassSupplier {
     private transient ClassLoader[] classLoaders;
 
-    public BytecodeSupplier(ClassLoader... classLoaders) throws RemoteException {
+    public ClassSupplier(ClassLoader... classLoaders) throws RemoteException {
         super(0, null, port -> {
             ServerSocket ss = new ServerSocket();
             ss.setReuseAddress(true);

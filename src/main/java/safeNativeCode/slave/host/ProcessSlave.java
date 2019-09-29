@@ -1,19 +1,19 @@
-package slave.types;
+package safeNativeCode.slave.host;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * A ProcessSlave runs a slave in another process on the same machine that the host process is executed on.
+ * A ProcessSlave runs a safeNativeCode.slave in another process on the same machine that the host process is executed on.
  */
 public class ProcessSlave extends AbstractSlave {
     private Process process;
 
     /**
-     * Create a slave that runs inside another process
+     * Create a safeNativeCode.slave that runs inside another process
      *
-     * @param classLoaders a list of classloaders to supply classes to the slave
+     * @param classLoaders a list of classloaders to supply classes to the safeNativeCode.slave
      */
     public ProcessSlave(ClassLoader... classLoaders) throws IOException, InterruptedException {
         super(classLoaders);

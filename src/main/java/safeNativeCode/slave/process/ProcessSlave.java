@@ -1,10 +1,11 @@
-package slave.process;
+package safeNativeCode.slave.process;
 
-import slave.Functions;
-import slave.IBytecodeSupplier;
-import slave.RemoteObject;
-import slave.exceptions.SlaveException;
-import slave.exceptions.UnknownObjectException;
+import safeNativeCode.slave.Functions;
+import safeNativeCode.slave.RemoteObject;
+import safeNativeCode.slave.InternalSlave;
+import safeNativeCode.exceptions.SlaveException;
+import safeNativeCode.exceptions.UnknownObjectException;
+import safeNativeCode.slave.host.IClassSupplier;
 
 import java.io.IOException;
 import java.rmi.NotBoundException;
@@ -17,9 +18,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * ProcessSlave is the class implementing features for a slave
+ * ProcessSlave is the class implementing features for a safeNativeCode.slave
  */
-public class ProcessSlave extends UnicastRemoteObject implements Process {
+public class ProcessSlave extends UnicastRemoteObject implements InternalSlave {
 
     private transient Map<ProcessObject, Object> localObjects = new HashMap<>();
 
@@ -28,9 +29,9 @@ public class ProcessSlave extends UnicastRemoteObject implements Process {
         while (!Arrays.asList(registry.list()).contains("bytecodeLookup")) {
             Thread.sleep(10);
         }
-        IBytecodeSupplier r = (IBytecodeSupplier) registry.lookup("bytecodeLookup");
+        IClassSupplier r = (IClassSupplier) registry.lookup("bytecodeLookup");
         ProcessClassloader.setByteCodeSupplier(r);
-        registry.rebind("slave/process", this);
+        registry.rebind("safeNativeCode/slave/process", this);
     }
 
     @Override

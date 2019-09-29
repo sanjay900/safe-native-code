@@ -1,15 +1,15 @@
 import compiler.JavaCompiler;
-import library.ClassLoadingDisabledException;
+import safeNativeCode.exceptions.ClassLoadingDisabledException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import slave.RemoteObject;
-import slave.Slave;
-import slave.exceptions.SlaveException;
-import slave.exceptions.UnknownObjectException;
-import slave.types.DockerSlave;
-import slave.types.ProcessSlave;
+import safeNativeCode.slave.RemoteObject;
+import safeNativeCode.slave.Slave;
+import safeNativeCode.exceptions.SlaveException;
+import safeNativeCode.exceptions.UnknownObjectException;
+import safeNativeCode.slave.host.DockerSlave;
+import safeNativeCode.slave.host.ProcessSlave;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -88,7 +88,7 @@ public class Tests {
     public void testIncorrectSlave() throws IOException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         Slave first = construct();
         Slave second = construct();
-        //Start two Slaves, and then try to use an object with an incorrect slave
+        //Start two Slaves, and then try to use an object with an incorrect safeNativeCode.slave
         RemoteObject<LocalAdder> c = first.call(LocalAdder::new);
         second.call(c, c2 -> c2);
     }
@@ -189,7 +189,7 @@ public class Tests {
         try {
             slave.run(() -> System.exit(1));
         } catch (RemoteException ignored) {
-            //We expect a RemoteException here, as RMI will lose its connection to the slave
+            //We expect a RemoteException here, as RMI will lose its connection to the safeNativeCode.slave
         }
         slave.waitForExit();
         Assert.assertFalse(slave.isAlive());

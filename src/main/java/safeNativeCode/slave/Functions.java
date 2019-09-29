@@ -1,9 +1,9 @@
-package slave;
+package safeNativeCode.slave;
 
 import java.io.Serializable;
 
 /*
-    Interfaces that allow for different types of arguments to be passed and be retrieved from a slave with lambdas
+    Interfaces that allow for different types of arguments to be passed and be retrieved from a safeNativeCode.slave with lambdas
  */
 public interface Functions {
     interface BiFunction<R, T1, T2> extends Serializable {

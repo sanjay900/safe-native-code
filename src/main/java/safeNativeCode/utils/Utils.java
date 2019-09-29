@@ -1,4 +1,4 @@
-package slave;
+package safeNativeCode.utils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

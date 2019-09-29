@@ -1,8 +1,9 @@
-package library;
+package safeNativeCode;
 
 import com.sun.jna.Native;
-import preloader.ClassPreloader;
-import slave.Utils;
+import safeNativeCode.preloader.ClassPreloader;
+import safeNativeCode.exceptions.ClassLoadingDisabledException;
+import safeNativeCode.utils.Utils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,11 +13,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 
-public class SafeCodeLibrary extends ClassLoader {
+public class SafeClassLoader extends ClassLoader {
     private boolean secure;
     private boolean securing = false;
 
-    public SafeCodeLibrary(ClassLoader parent) {
+    public SafeClassLoader(ClassLoader parent) {
         super(parent);
     }
 

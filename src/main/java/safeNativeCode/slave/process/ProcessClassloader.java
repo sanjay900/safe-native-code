@@ -1,7 +1,11 @@
-package slave.process;
+package safeNativeCode.slave.process;
 
-import slave.*;
-import slave.exceptions.SlaveException;
+import safeNativeCode.slave.Functions;
+import safeNativeCode.slave.RemoteObject;
+import safeNativeCode.slave.InternalSlave;
+import safeNativeCode.exceptions.SlaveException;
+import safeNativeCode.slave.host.IClassSupplier;
+import safeNativeCode.utils.Utils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,7 +17,7 @@ import java.util.List;
  * ProcessClassloader facilitates loading classes from the main process, using RMI. We retrieve a BytecodeSupplier from the host, and use it to load classes.
  */
 public class ProcessClassloader extends SecureClassLoader {
-    private static IBytecodeSupplier bytecodeSupplier;
+    private static IClassSupplier bytecodeSupplier;
     //A list of classes that we need to load using a ProcessClassloader.
     //This is needed so that all any code run on the client, will use this classloader as its parent for loading classes.
     private List<String> forced = Arrays.asList(
@@ -21,7 +25,7 @@ public class ProcessClassloader extends SecureClassLoader {
             Process.class.getName(),
             ProcessObject.class.getName(),
             ProcessSlave.class.getName(),
-            SlaveInternal.class.getName(),
+            InternalSlave.class.getName(),
             RemoteObject.class.getName(),
             SlaveException.class.getName()
     );
@@ -59,7 +63,7 @@ public class ProcessClassloader extends SecureClassLoader {
     }
 
     // Due to the fact that this is used across modules (ProcessClassloader and ProcessSlave exist inside different ClassLoaders), we need to make it public.
-    public static void setByteCodeSupplier(IBytecodeSupplier bytecodeSupplier) {
+    public static void setByteCodeSupplier(IClassSupplier bytecodeSupplier) {
         ProcessClassloader.bytecodeSupplier = bytecodeSupplier;
     }
 }

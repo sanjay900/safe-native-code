@@ -1,6 +1,6 @@
-package slave.types;
+package safeNativeCode.slave.host;
 
-import slave.Utils;
+import safeNativeCode.utils.Utils;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -10,7 +10,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * A Docker SlaveType runs a slave inside a docker container.
+ * A Docker SlaveType runs a safeNativeCode.slave inside a docker container.
  */
 public class DockerSlave extends AbstractSlave {
     private Process process;
@@ -18,20 +18,20 @@ public class DockerSlave extends AbstractSlave {
     private static final String DOCKER_IMAGE = "openjdk:12";
 
     /**
-     * Create a slave that runs inside a docker container, only sharing required folders for execution.
+     * Create a safeNativeCode.slave that runs inside a docker container, only sharing required folders for execution.
      *
-     * @param classLoaders a list of classloaders to supply classes to the slave
+     * @param classLoaders a list of classloaders to supply classes to the safeNativeCode.slave
      */
     public DockerSlave(ClassLoader... classLoaders) throws IOException, InterruptedException {
         this(Collections.emptyList(), classLoaders);
     }
 
     /**
-     * Create a slave that runs inside a docker container
+     * Create a safeNativeCode.slave that runs inside a docker container
      *
      * @param pathsToShare a list of directories to share with the container. All jars on the classpath are automatically shared.
      *                     Paths are mounted at /shared/path
-     * @param classLoaders a list of classloaders to supply classes to the slave
+     * @param classLoaders a list of classloaders to supply classes to the safeNativeCode.slave
      */
     public DockerSlave(List<Path> pathsToShare, ClassLoader... classLoaders) throws IOException, InterruptedException {
         super(classLoaders);

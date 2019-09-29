@@ -1,4 +1,4 @@
-package library;
+package safeNativeCode.exceptions;
 
 public class ClassLoadingDisabledException extends ClassNotFoundException {
     public ClassLoadingDisabledException() {

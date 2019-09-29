@@ -1,7 +1,8 @@
-package slave.types;
+package safeNativeCode.slave.host;
 
-import slave.*;
-import slave.exceptions.SlaveDeadException;
+import safeNativeCode.slave.*;
+import safeNativeCode.exceptions.SlaveDeadException;
+import safeNativeCode.exceptions.UnknownObjectException;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -19,17 +20,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * A AbstractSlave is used when we have a server that executes code in a slave process somewhere.
+ * A AbstractSlave is used when we have a server that executes code in a safeNativeCode.slave process somewhere.
  */
 public abstract class AbstractSlave implements Slave {
-    private SlaveInternal slave;
+    private InternalSlave slave;
     private int registryPort;
     private ClassLoader[] classLoaders;
 
     /**
-     * Create a slave that runs in another process somewhere
+     * Create a safeNativeCode.slave that runs in another process somewhere
      *
-     * @param classLoaders a list of classloaders to supply classes to the slave, if useAgent is false
+     * @param classLoaders a list of classloaders to supply classes to the safeNativeCode.slave, if useAgent is false
      */
     AbstractSlave(ClassLoader... classLoaders) throws IOException {
         if (classLoaders.length == 0) {
@@ -56,10 +57,10 @@ public abstract class AbstractSlave implements Slave {
         List<String> args = new ArrayList<>();
         args.add(javaCommand);
         args.add("-Xshare:off");
-        args.add("-Djava.system.class.loader=slave.process.ProcessClassloader");
+        args.add("-Djava.system.class.loader=safeNativeCode.slave.process.ProcessClassloader");
         args.add("-cp");
         args.add(Arrays.stream(getClassPath()).map(path -> libLocation + "/" + path).collect(Collectors.joining(":")));
-        args.add(slave.process.ProcessSlave.class.getName());
+        args.add(safeNativeCode.slave.process.ProcessSlave.class.getName());
         args.addAll(Arrays.asList(getSlaveArgs()));
         return args.toArray(new String[0]);
     }
@@ -73,7 +74,7 @@ public abstract class AbstractSlave implements Slave {
 
     void setupRegistry() throws RemoteException, InterruptedException {
         Registry registry = LocateRegistry.getRegistry(registryPort);
-        BytecodeSupplier retriever = new BytecodeSupplier(classLoaders);
+        ClassSupplier retriever = new ClassSupplier(classLoaders);
         //Try repeatedly until the registry is active.
         while (true) {
             try {
@@ -94,7 +95,7 @@ public abstract class AbstractSlave implements Slave {
         }
         while (true) {
             try {
-                slave = (SlaveInternal) registry.lookup("slave/process");
+                slave = (InternalSlave) registry.lookup("safeNativeCode/slave/process");
                 break;
             } catch (NotBoundException | UnmarshalException e) {
                 Thread.sleep(10);
@@ -193,5 +194,15 @@ public abstract class AbstractSlave implements Slave {
     public <R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> RemoteObject<R> call(RemoteObject<T1> t1, RemoteObject<T2> t2, RemoteObject<T3> t3, RemoteObject<T4> t4, RemoteObject<T5> t5, RemoteObject<T6> t6, RemoteObject<T7> t7, RemoteObject<T8> t8, RemoteObject<T9> t9, RemoteObject<T10> t10, Functions.TenFunction<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> lambda) throws RemoteException {
         checkAlive();
         return slave.call(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, lambda);
+    }
+
+    @Override
+    public <T> T get(RemoteObject<T> obj) throws RemoteException, UnknownObjectException {
+        return slave.get(obj);
+    }
+
+    @Override
+    public void remove(RemoteObject obj) throws RemoteException, UnknownObjectException {
+        slave.remove(obj);
     }
 }

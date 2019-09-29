@@ -1,6 +1,6 @@
-package preloader;
+package safeNativeCode.preloader;
 
-import library.SafeCodeLibrary;
+import safeNativeCode.SafeClassLoader;
 
 import java.util.Set;
 
@@ -13,7 +13,7 @@ public class ClassPreloader {
         processor = new ClassPathProcessor();
     }
 
-    public void preload(SafeCodeLibrary safeCodeLibrary, Set<String> loaded) {
+    public void preload(SafeClassLoader safeCodeLibrary, Set<String> loaded) {
         this.loadedClasses = loaded;
         //Load all classes that the processor visits.
         processor.handle(classFile -> {

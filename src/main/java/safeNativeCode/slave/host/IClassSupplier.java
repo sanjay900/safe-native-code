@@ -1,4 +1,4 @@
-package slave;
+package safeNativeCode.slave.host;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -7,7 +7,7 @@ import java.rmi.RemoteException;
  * A simple interface that allows for asking a remote process to do things
  * it can ask a remote process to hand over bytecode for a class
  */
-public interface IBytecodeSupplier extends Remote {
+public interface IClassSupplier extends Remote {
     /**
      * Retrieve the bytecode for a class
      *
