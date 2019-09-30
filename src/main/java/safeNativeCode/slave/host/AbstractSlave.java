@@ -34,10 +34,10 @@ public abstract class AbstractSlave implements Slave {
      *
      * @param classLoaders a list of classloaders to supply classes to the safeNativeCode.slave, if useAgent is false
      */
-    AbstractSlave(int timeLimit, String[] args, ClassLoader... classLoaders) throws IOException {
+    AbstractSlave(int timeLimit, String[] args, ClassLoader... classLoaders) {
         this.args = args;
         if (classLoaders.length == 0) {
-            throw new IOException("A classloader is expected!");
+            throw new RuntimeException("A classloader is expected!");
         }
         this.classLoaders = classLoaders;
         this.registryPort = findAvailablePort();
@@ -51,7 +51,7 @@ public abstract class AbstractSlave implements Slave {
                         terminate();
                     }
                 } catch (InterruptedException | IOException e) {
-                    e.printStackTrace();
+                    throw new RuntimeException(e);
                 }
             }).start();
         }
@@ -61,12 +61,16 @@ public abstract class AbstractSlave implements Slave {
         return timeLimitUp;
     }
 
-    private int findAvailablePort() throws IOException {
-        ServerSocket ss = new ServerSocket();
-        ss.setReuseAddress(true);
-        ss.bind(new InetSocketAddress(0));
-        ss.close();
-        return ss.getLocalPort();
+    private int findAvailablePort() {
+        try {
+            ServerSocket ss = new ServerSocket();
+            ss.setReuseAddress(true);
+            ss.bind(new InetSocketAddress(0));
+            ss.close();
+            return ss.getLocalPort();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private String[] getSlaveArgs() {

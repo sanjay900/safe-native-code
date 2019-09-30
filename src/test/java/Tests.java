@@ -4,7 +4,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import safeNativeCode.exceptions.ClassLoadingDisabledException;
-import safeNativeCode.exceptions.SlaveDeadException;
 import safeNativeCode.exceptions.SlaveException;
 import safeNativeCode.exceptions.UnknownObjectException;
 import safeNativeCode.slave.RemoteObject;
