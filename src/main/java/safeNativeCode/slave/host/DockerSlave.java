@@ -24,8 +24,8 @@ public class DockerSlave extends AbstractSlave {
      *
      * @param classLoaders a list of classloaders to supply classes to the safeNativeCode.slave
      */
-    public DockerSlave(ClassLoader... classLoaders) throws IOException, InterruptedException {
-        this(Collections.emptyList(), classLoaders);
+    public DockerSlave(int timeLimit, String[] args, ClassLoader... classLoaders) throws IOException, InterruptedException {
+        this(timeLimit, args, Collections.emptyList(), classLoaders);
     }
 
     /**
@@ -35,11 +35,11 @@ public class DockerSlave extends AbstractSlave {
      *                     Paths are mounted at /shared/path
      * @param classLoaders a list of classloaders to supply classes to the safeNativeCode.slave
      */
-    public DockerSlave(List<Path> pathsToShare, ClassLoader... classLoaders) throws IOException, InterruptedException {
-        super(classLoaders);
+    public DockerSlave(int timeLimit, String[] jArgs, List<Path> pathsToShare, ClassLoader... classLoaders) throws IOException, InterruptedException {
+        super(timeLimit, jArgs, classLoaders);
         //Pull first so we can easily get status
         new ProcessBuilder("docker", "pull", DOCKER_IMAGE).inheritIO().start().waitFor();
-
+        if (hasTimedOut()) return;
         List<String> args = new ArrayList<>(Arrays.asList("docker", "create", "--rm", "--network", "host"));
         if (Utils.isUnix()) {
             String username = System.getProperty("user.name");

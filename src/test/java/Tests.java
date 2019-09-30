@@ -1,13 +1,14 @@
 import compiler.JavaCompiler;
-import safeNativeCode.exceptions.ClassLoadingDisabledException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import safeNativeCode.slave.RemoteObject;
-import safeNativeCode.slave.Slave;
+import safeNativeCode.exceptions.ClassLoadingDisabledException;
+import safeNativeCode.exceptions.SlaveDeadException;
 import safeNativeCode.exceptions.SlaveException;
 import safeNativeCode.exceptions.UnknownObjectException;
+import safeNativeCode.slave.RemoteObject;
+import safeNativeCode.slave.Slave;
 import safeNativeCode.slave.host.DockerSlave;
 import safeNativeCode.slave.host.ProcessSlave;
 
@@ -43,7 +44,14 @@ public class Tests {
         if (loaders.length == 0) {
             loaders = new ClassLoader[]{JavaCompiler.getClassLoader()};
         }
-        return clazz.getDeclaredConstructor(ClassLoader[].class).newInstance((Object) loaders);
+        return clazz.getDeclaredConstructor(int.class, String[].class, ClassLoader[].class).newInstance(0, new String[]{}, (Object) loaders);
+    }
+
+    private Slave construct(int timeLimit, int memLimit, ClassLoader... loaders) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+        if (loaders.length == 0) {
+            loaders = new ClassLoader[]{JavaCompiler.getClassLoader()};
+        }
+        return clazz.getDeclaredConstructor(int.class, String[].class, ClassLoader[].class).newInstance(timeLimit, memLimit > 0 ? new String[]{"-Xmx" + memLimit + "M"} : new String[]{}, (Object) loaders);
     }
 
     static class Adder implements Serializable {
@@ -132,20 +140,20 @@ public class Tests {
         }
     }
 
-//    @Test
-//    public void timeConstruction() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-//        int testCount = 20;
-//        long totalTime = 0L;
-//        for (int i = 0; i < testCount + 5; i++) {
-//            Instant start = Instant.now();
-//            construct();
-//            Instant end = Instant.now();
-//            if (i > 5) {
-//                totalTime += Duration.between(start, end).toMillis();
-//            }
-//        }
-//        System.out.println("Time taken to construct: " + totalTime / testCount);
-//    }
+    @Test
+    public void timeConstruction() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+        int testCount = 20;
+        long totalTime = 0L;
+        for (int i = 0; i < testCount + 5; i++) {
+            Instant start = Instant.now();
+            construct();
+            Instant end = Instant.now();
+            if (i > 5) {
+                totalTime += Duration.between(start, end).toMillis();
+            }
+        }
+        System.out.println("Time taken to construct: " + totalTime / testCount);
+    }
 
     @Test
     public void timeExecution() throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
@@ -220,6 +228,30 @@ public class Tests {
     @Test(expected = ClassLoadingDisabledException.class)
     public void testSafety() throws Exception {
         Class.forName("NotRealClass");
+    }
+
+    @Test(expected = OutOfMemoryError.class)
+    public void testMemoryLimit() throws Throwable {
+        try {
+            Slave s = construct(0, 10);
+            s.call(() -> new byte[1024 * 1024 * 1024]);
+        } catch (SlaveException ex) {
+            throw ex.getChild().get();
+        }
+    }
+
+    @Test
+    public void testTimeLimit() throws Throwable {
+        try {
+            Slave s = construct(10, 0);
+            s.call(() -> {
+                Thread.sleep(20000);
+                return 1;
+            });
+            Assert.assertFalse(s.isAlive());
+        } catch (UnmarshalException e) {
+            //This is expected, as the slave is terminated so we do not get a response
+        }
     }
 
     private static class TestException extends Exception {

@@ -26,19 +26,39 @@ public abstract class AbstractSlave implements Slave {
     private InternalSlave slave;
     private int registryPort;
     private ClassLoader[] classLoaders;
+    private boolean timeLimitUp = false;
+    private String[] args;
 
     /**
      * Create a safeNativeCode.slave that runs in another process somewhere
      *
      * @param classLoaders a list of classloaders to supply classes to the safeNativeCode.slave, if useAgent is false
      */
-    AbstractSlave(ClassLoader... classLoaders) throws IOException {
+    AbstractSlave(int timeLimit, String[] args, ClassLoader... classLoaders) throws IOException {
+        this.args = args;
         if (classLoaders.length == 0) {
             throw new IOException("A classloader is expected!");
         }
         this.classLoaders = classLoaders;
         this.registryPort = findAvailablePort();
         Runtime.getRuntime().addShutdownHook(new Thread(this::terminate));
+        if (timeLimit > 0) {
+            new Thread(()->{
+                try {
+                    Thread.sleep(timeLimit*1000);
+                    timeLimitUp = true;
+                    if (isAlive()) {
+                        terminate();
+                    }
+                } catch (InterruptedException | IOException e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        }
+    }
+
+    public boolean hasTimedOut() {
+        return timeLimitUp;
     }
 
     private int findAvailablePort() throws IOException {
@@ -56,6 +76,7 @@ public abstract class AbstractSlave implements Slave {
     String[] getJavaCommandArgs(String javaCommand, String libLocation) {
         List<String> args = new ArrayList<>();
         args.add(javaCommand);
+        args.addAll(Arrays.asList(this.args));
         args.add("-Xshare:off");
         args.add("-Djava.system.class.loader=safeNativeCode.slave.process.ProcessClassloader");
         args.add("-cp");
@@ -73,6 +94,7 @@ public abstract class AbstractSlave implements Slave {
     }
 
     void setupRegistry() throws RemoteException, InterruptedException {
+        if (timeLimitUp) return;
         Registry registry = LocateRegistry.getRegistry(registryPort);
         ClassSupplier retriever = new ClassSupplier(classLoaders);
         //Try repeatedly until the registry is active.
@@ -105,7 +127,7 @@ public abstract class AbstractSlave implements Slave {
 
     private void checkAlive() {
         try {
-            if (!isAlive()) {
+            if (timeLimitUp || !isAlive()) {
                 throw new SlaveDeadException(this);
             }
         } catch (IOException | InterruptedException e) {

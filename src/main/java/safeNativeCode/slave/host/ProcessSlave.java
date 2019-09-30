@@ -15,8 +15,8 @@ public class ProcessSlave extends AbstractSlave {
      *
      * @param classLoaders a list of classloaders to supply classes to the safeNativeCode.slave
      */
-    public ProcessSlave(ClassLoader... classLoaders) throws IOException, InterruptedException {
-        super(classLoaders);
+    public ProcessSlave(int timeLimit, String[] args, ClassLoader... classLoaders) throws IOException, InterruptedException {
+        super(timeLimit, args, classLoaders);
         Path javaProcess = Paths.get(System.getProperty("java.home"), "bin", "java");
         process = new ProcessBuilder(getJavaCommandArgs(javaProcess.toString(), "")).inheritIO().start();
         //End the remoteSlave process if the parent process ends.
@@ -40,6 +40,6 @@ public class ProcessSlave extends AbstractSlave {
 
     @Override
     public boolean isAlive() {
-        return process.isAlive();
+        return process != null && process.isAlive();
     }
 }
