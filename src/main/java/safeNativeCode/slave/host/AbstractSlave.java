@@ -49,7 +49,7 @@ public abstract class AbstractSlave implements Slave {
         return ss.getLocalPort();
     }
 
-    String[] getSlaveArgs() {
+    private String[] getSlaveArgs() {
         return new String[]{registryPort + ""};
     }
 
