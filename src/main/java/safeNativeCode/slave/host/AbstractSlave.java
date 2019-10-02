@@ -19,9 +19,7 @@ import java.rmi.UnmarshalException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.stream.Collectors;
@@ -32,7 +30,7 @@ import java.util.stream.Collectors;
 public abstract class AbstractSlave implements Slave {
     private InternalSlave slave;
     private int registryPort;
-    private List<ClassLoader> classLoaders;
+    private Set<ClassLoader> classLoaders;
     private boolean timeLimitUp = false;
     private String[] args;
 
@@ -46,7 +44,7 @@ public abstract class AbstractSlave implements Slave {
         if (classLoaders.length == 0) {
             throw new RuntimeException("A classloader is expected!");
         }
-        this.classLoaders = new ArrayList<>(Arrays.asList(classLoaders));
+        this.classLoaders = new HashSet<>(Arrays.asList(classLoaders));
         this.registryPort = findAvailablePort();
         Runtime.getRuntime().addShutdownHook(new Thread(this::terminate));
         if (timeLimit > 0) {
