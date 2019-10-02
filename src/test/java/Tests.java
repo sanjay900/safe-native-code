@@ -14,10 +14,10 @@ import safeNativeCode.slave.host.ProcessSlave;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
-import java.rmi.RemoteException;
 import java.rmi.UnmarshalException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.CancellationException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -190,16 +190,9 @@ public class Tests {
         Assert.assertFalse(slave.isAlive());
     }
 
-    @Test
+    @Test(expected = CancellationException.class)
     public void testCrashing() throws Exception {
-        Slave slave = construct();
-        try {
-            slave.run(() -> System.exit(1));
-        } catch (RemoteException ignored) {
-            //We expect a RemoteException here, as RMI will lose its connection to the safeNativeCode.slave
-        }
-        slave.waitForExit();
-        Assert.assertFalse(slave.isAlive());
+        construct().run(() -> System.exit(1));
     }
 
     @Test
@@ -239,18 +232,12 @@ public class Tests {
         }
     }
 
-    @Test
+    @Test(expected = CancellationException.class)
     public void testTimeLimit() throws Throwable {
-        try {
-            Slave s = construct(10, 0);
-            s.call(() -> {
-                Thread.sleep(20000);
-                return 1;
-            });
-            Assert.assertFalse(s.isAlive());
-        } catch (UnmarshalException e) {
-            //This is expected, as the slave is terminated so we do not get a response
-        }
+        construct(10, 0).call(() -> {
+            Thread.sleep(20000);
+            return 1;
+        });
     }
 
     private static class TestException extends Exception {

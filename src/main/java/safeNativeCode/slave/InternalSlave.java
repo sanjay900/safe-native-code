@@ -4,6 +4,7 @@ import safeNativeCode.exceptions.UnknownObjectException;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Slave is the remote api used by RemoteObject for interfacing with a remote object.
@@ -12,7 +13,7 @@ public interface InternalSlave extends Remote {
 
     <T> RemoteObject<T> copy(RemoteObject<T> original) throws RemoteException;
 
-    void run(Functions.Runnable lambda) throws RemoteException;
+    void run(Functions.Runnable lambda) throws RemoteException, ExecutionException, InterruptedException;
 
     <R> RemoteObject<R> call(Functions.Supplier<R> lambda) throws RemoteException;
 
