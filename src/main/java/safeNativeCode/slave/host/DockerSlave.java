@@ -37,6 +37,10 @@ public class DockerSlave extends AbstractSlave {
      */
     public DockerSlave(int timeLimit, String[] jArgs, List<Path> pathsToShare, ClassLoader... classLoaders) {
         super(timeLimit, jArgs, classLoaders);
+
+    }
+
+    protected void start() {
         try {
             //Pull first so we can easily get status
             new ProcessBuilder("docker", "pull", DOCKER_IMAGE).inheritIO().start().waitFor();

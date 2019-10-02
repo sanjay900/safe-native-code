@@ -62,6 +62,7 @@ public abstract class AbstractSlave implements Slave {
                 }
             }).start();
         }
+        start();
     }
 
     public boolean hasTimedOut() {
@@ -103,7 +104,6 @@ public abstract class AbstractSlave implements Slave {
                 .map(path -> Paths.get(path).toAbsolutePath().toString())
                 .toArray(String[]::new);
     }
-
     void setupRegistry() throws RemoteException, InterruptedException {
         if (timeLimitUp) return;
         Registry registry = LocateRegistry.getRegistry(registryPort);
@@ -135,7 +135,7 @@ public abstract class AbstractSlave implements Slave {
             }
         }
     }
-
+    protected abstract void start();
     private void checkAlive() {
         try {
             if (timeLimitUp || !isAlive()) {

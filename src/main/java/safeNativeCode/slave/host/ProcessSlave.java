@@ -17,6 +17,10 @@ public class ProcessSlave extends AbstractSlave {
      */
     public ProcessSlave(int timeLimit, String[] args, ClassLoader... classLoaders) {
         super(timeLimit, args, classLoaders);
+    }
+
+    protected void start() {
+        if (process != null) terminate();
         try {
             Path javaProcess = Paths.get(System.getProperty("java.home"), "bin", "java");
             process = new ProcessBuilder(getJavaCommandArgs(javaProcess.toString(), "")).inheritIO().start();
