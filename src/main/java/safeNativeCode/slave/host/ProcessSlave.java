@@ -17,6 +17,7 @@ public class ProcessSlave extends AbstractSlave {
      */
     public ProcessSlave(int timeLimit, String[] args, ClassLoader... classLoaders) {
         super(timeLimit, args, classLoaders);
+        start();
     }
 
     protected void start() {

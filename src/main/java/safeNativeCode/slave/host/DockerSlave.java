@@ -18,6 +18,7 @@ public class DockerSlave extends AbstractSlave {
     private Process process;
     private String containerID;
     private static final String DOCKER_IMAGE = "openjdk:12";
+    private List<Path> pathsToShare;
 
     /**
      * Create a safeNativeCode.slave that runs inside a docker container, only sharing required folders for execution.
@@ -37,6 +38,8 @@ public class DockerSlave extends AbstractSlave {
      */
     public DockerSlave(int timeLimit, String[] jArgs, List<Path> pathsToShare, ClassLoader... classLoaders) {
         super(timeLimit, jArgs, classLoaders);
+        this.pathsToShare = pathsToShare;
+        start();
 
     }
 

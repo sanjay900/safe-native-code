@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 public abstract class AbstractSlave implements Slave {
     private InternalSlave slave;
     private int registryPort;
-    private ClassLoader[] classLoaders;
+    private List<ClassLoader> classLoaders;
     private boolean timeLimitUp = false;
     private String[] args;
 
@@ -46,7 +46,7 @@ public abstract class AbstractSlave implements Slave {
         if (classLoaders.length == 0) {
             throw new RuntimeException("A classloader is expected!");
         }
-        this.classLoaders = classLoaders;
+        this.classLoaders = new ArrayList<>(Arrays.asList(classLoaders));
         this.registryPort = findAvailablePort();
         Runtime.getRuntime().addShutdownHook(new Thread(this::terminate));
         if (timeLimit > 0) {
@@ -62,7 +62,10 @@ public abstract class AbstractSlave implements Slave {
                 }
             }).start();
         }
-        start();
+    }
+
+    public void addClassLoader(ClassLoader c) {
+        this.classLoaders.add(c);
     }
 
     public boolean hasTimedOut() {
@@ -139,7 +142,7 @@ public abstract class AbstractSlave implements Slave {
     private void checkAlive() {
         try {
             if (timeLimitUp || !isAlive()) {
-                throw new SlaveDeadException(this);
+                this.start();
             }
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);

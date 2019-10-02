@@ -1,9 +1,9 @@
 package safeNativeCode.slave.process;
 
-import safeNativeCode.slave.Functions;
-import safeNativeCode.slave.RemoteObject;
-import safeNativeCode.slave.InternalSlave;
 import safeNativeCode.exceptions.SlaveException;
+import safeNativeCode.slave.Functions;
+import safeNativeCode.slave.InternalSlave;
+import safeNativeCode.slave.RemoteObject;
 import safeNativeCode.slave.host.IClassSupplier;
 import safeNativeCode.utils.Utils;
 

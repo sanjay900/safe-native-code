@@ -7,13 +7,13 @@ import java.io.IOException;
  */
 public interface Slave extends InternalSlave {
 
+    void addClassLoader(ClassLoader classLoader);
     /**
      * Is this slave still alive
      *
      * @return true if the server is slave alive false otherwise
      */
     boolean isAlive() throws IOException, InterruptedException;
-
     /**
      * Ask the slave to terminate
      */
