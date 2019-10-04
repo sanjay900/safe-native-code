@@ -1,6 +1,5 @@
 package safeNativeCode.slave.host;
 
-import safeNativeCode.exceptions.SlaveDeadException;
 import safeNativeCode.exceptions.SlaveException;
 import safeNativeCode.exceptions.UnknownObjectException;
 import safeNativeCode.slave.Functions;
@@ -9,9 +8,12 @@ import safeNativeCode.slave.RemoteObject;
 import safeNativeCode.slave.Slave;
 
 import java.io.EOFException;
+import java.io.File;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.net.SocketException;
 import java.nio.file.Paths;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -87,13 +89,15 @@ public abstract class AbstractSlave implements Slave {
     }
 
     String[] getJavaCommandArgs(String javaCommand, String libLocation) {
+        if (!libLocation.isEmpty()) libLocation += File.separator;
         List<String> args = new ArrayList<>();
         args.add(javaCommand);
         args.addAll(Arrays.asList(this.args));
         args.add("-Xshare:off");
         args.add("-Djava.system.class.loader=safeNativeCode.slave.process.ProcessClassloader");
         args.add("-cp");
-        args.add(Arrays.stream(getClassPath()).map(path -> libLocation + "/" + path).collect(Collectors.joining(":")));
+        String finalLibLocation = libLocation;
+        args.add(Arrays.stream(getClassPath()).map(path -> finalLibLocation + path).collect(Collectors.joining(File.pathSeparator)));
         args.add(safeNativeCode.slave.process.ProcessSlave.class.getName());
         args.addAll(Arrays.asList(getSlaveArgs()));
         return args.toArray(new String[0]);
@@ -101,10 +105,11 @@ public abstract class AbstractSlave implements Slave {
 
     static String[] getClassPath() {
         return Arrays
-                .stream(System.getProperty("java.class.path").split(":"))
+                .stream(System.getProperty("java.class.path").split(File.pathSeparator))
                 .map(path -> Paths.get(path).toAbsolutePath().toString())
                 .toArray(String[]::new);
     }
+
     void setupRegistry() throws RemoteException, InterruptedException {
         if (timeLimitUp) return;
         Registry registry = LocateRegistry.getRegistry(registryPort);
@@ -136,7 +141,9 @@ public abstract class AbstractSlave implements Slave {
             }
         }
     }
+
     protected abstract void start();
+
     private void checkAlive() {
         try {
             if (timeLimitUp || !isAlive()) {
@@ -153,7 +160,7 @@ public abstract class AbstractSlave implements Slave {
             return c.call();
         } catch (RemoteException | EOFException e) {
             //EOFExceptions are thrown if RMI was unable to retrieve data from a slave, aka the slave has died
-            if (e instanceof EOFException || e.getCause() instanceof EOFException) {
+            if (e.getCause() instanceof SocketException || e.getCause() instanceof ConnectException || e instanceof EOFException || e.getCause() instanceof EOFException) {
                 throw new CancellationException();
             }
             throw new RuntimeException(e);
