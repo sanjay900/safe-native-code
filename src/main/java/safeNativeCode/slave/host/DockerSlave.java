@@ -67,8 +67,12 @@ public class DockerSlave extends AbstractSlave {
                 }
             }
             pathsToShare.forEach(path -> {
-                String p = path.toAbsolutePath().toString();
-                args.addAll(Arrays.asList("-v", p + ":/shared/" + p));
+                if (Files.exists(path)) {
+                    String p = path.toAbsolutePath().toString();
+                    args.addAll(Arrays.asList("-v", p + ":/shared/" + p));
+                } else {
+                    System.out.println("Path: "+path+" does not exist, skipping mount!");
+                }
             });
             args.add(DOCKER_IMAGE);
             args.addAll(Arrays.asList(getJavaCommandArgs("java", "/safeNativeCode/")));
