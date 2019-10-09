@@ -39,12 +39,12 @@ public abstract class AbstractSlave implements Slave {
     /**
      * Create a safeNativeCode.slave that runs in another process somewhere
      *
-     * @param classLoaders a list of classloaders to supply classes to the safeNativeCode.slave, if useAgent is false
+     * @param classLoaders a list of classloaders to supply classes to the safeNativeCode.slave
      */
     AbstractSlave(int timeLimit, String[] args, ClassLoader... classLoaders) {
         this.args = args;
         if (classLoaders.length == 0) {
-            throw new RuntimeException("A classloader is expected!");
+            classLoaders = new ClassLoader[]{ClassLoader.getSystemClassLoader()};
         }
         this.classLoaders = new HashSet<>(Arrays.asList(classLoaders));
         this.registryPort = findAvailablePort();
