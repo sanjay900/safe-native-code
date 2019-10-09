@@ -10,6 +10,10 @@ import java.nio.file.Paths;
 public class ProcessSlave extends AbstractSlave {
     private Process process;
 
+    public ProcessSlave(ClassLoader... classLoaders) {
+        this(0, new String[]{}, classLoaders);
+    }
+
     /**
      * Create a safeNativeCode.slave that runs inside another process
      *
