@@ -6,6 +6,7 @@ import safeNativeCode.slave.Functions;
 import safeNativeCode.slave.InternalSlave;
 import safeNativeCode.slave.RemoteObject;
 import safeNativeCode.slave.Slave;
+import safeNativeCode.slave.process.ProcessMain;
 
 import java.io.EOFException;
 import java.io.File;
@@ -98,7 +99,7 @@ public abstract class AbstractSlave implements Slave {
         args.add("-cp");
         String finalLibLocation = libLocation;
         args.add(Arrays.stream(getClassPath()).map(path -> finalLibLocation + path).collect(Collectors.joining(File.pathSeparator)));
-        args.add(safeNativeCode.slave.process.ProcessSlave.class.getName());
+        args.add(ProcessMain.class.getName());
         args.addAll(Arrays.asList(getSlaveArgs()));
         return args.toArray(new String[0]);
     }

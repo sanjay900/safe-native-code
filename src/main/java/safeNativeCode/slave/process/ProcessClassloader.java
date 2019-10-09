@@ -24,7 +24,7 @@ public class ProcessClassloader extends SecureClassLoader {
             Functions.class.getName() + "($.*)?",
             Process.class.getName(),
             ProcessObject.class.getName(),
-            ProcessSlave.class.getName(),
+            ProcessMain.class.getName(),
             InternalSlave.class.getName(),
             RemoteObject.class.getName(),
             SlaveException.class.getName()

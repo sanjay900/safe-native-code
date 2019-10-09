@@ -20,11 +20,11 @@ import java.util.Map;
 /**
  * ProcessSlave is the class implementing features for a safeNativeCode.slave
  */
-public class ProcessSlave extends UnicastRemoteObject implements InternalSlave {
+public class ProcessMain extends UnicastRemoteObject implements InternalSlave {
 
     private transient Map<ProcessObject, Object> localObjects = new HashMap<>();
 
-    public ProcessSlave(int registryPort) throws IOException, InterruptedException, NotBoundException {
+    public ProcessMain(int registryPort) throws IOException, InterruptedException, NotBoundException {
         Registry registry = LocateRegistry.createRegistry(registryPort);
         while (!Arrays.asList(registry.list()).contains("bytecodeLookup")) {
             Thread.sleep(10);
@@ -211,6 +211,6 @@ public class ProcessSlave extends UnicastRemoteObject implements InternalSlave {
     }
 
     public static void main(String[] args) throws InterruptedException, NotBoundException, IOException {
-        new ProcessSlave(Integer.parseInt(args[args.length - 1]));
+        new ProcessMain(Integer.parseInt(args[args.length - 1]));
     }
 }
