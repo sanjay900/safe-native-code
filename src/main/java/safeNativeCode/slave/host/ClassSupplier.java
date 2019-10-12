@@ -3,6 +3,7 @@ package safeNativeCode.slave.host;
 
 import safeNativeCode.utils.Utils;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
@@ -29,7 +30,7 @@ public class ClassSupplier extends UnicastRemoteObject implements IClassSupplier
 
     public byte[] getByteCode(String clazz) {
         for (ClassLoader loader : classLoaders) {
-            InputStream is = loader.getResourceAsStream(clazz.replace(".", "/") + ".class");
+            InputStream is = loader.getResourceAsStream(clazz.replace(".", File.separator) + ".class");
             if (is != null) {
                 try {
                     return Utils.readStream(is);

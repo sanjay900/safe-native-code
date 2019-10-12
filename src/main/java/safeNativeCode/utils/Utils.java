@@ -1,6 +1,7 @@
 package safeNativeCode.utils;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -30,7 +31,7 @@ public class Utils {
      * @return true if the class is a core java class, false otherwise
      */
     public static boolean isJavaClass(String name) {
-        String className = name.replace(".", "/") + ".class";
+        String className = name.replace(".", File.separator) + ".class";
         URL classLoc = ClassLoader.getSystemClassLoader().getResource(className);
         //jrt: = java9, java.home = java8
         return classLoc != null && (name.startsWith("java.") || classLoc.toString().startsWith("jar:file:" + System.getProperty("java.home")) || classLoc.toString().startsWith("jrt:/java.compiler") || classLoc.toString().startsWith("jrt:/java.base"));

@@ -5,6 +5,7 @@ import safeNativeCode.exceptions.ClassLoadingDisabledException;
 import safeNativeCode.preloader.ClassPreloader;
 import safeNativeCode.utils.Utils;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -91,7 +92,7 @@ public class SafeClassLoader extends ClassLoader {
             throw getDisabledException();
         }
         try {
-            String className = name.replace(".", "/") + ".class";
+            String className = name.replace(".", File.separator) + ".class";
             InputStream is = getResourceAsStream(className);
             if (is == null) {
                 throw new ClassNotFoundException("Unable to find: " + name);

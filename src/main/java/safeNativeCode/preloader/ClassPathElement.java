@@ -44,7 +44,7 @@ class ClassPathElement {
 
     private void handleFile(Consumer<ClassFile> consumer, File file, boolean isTop, String path) {
         String name = file.getName().trim();
-        String newPath = isTop ? null : path == null ? name : path + "/" + name;
+        String newPath = isTop ? null : path == null ? name : path + File.separator + name;
         if (file.isDirectory()) {
             File[] files = file.listFiles();
             if (files != null) {

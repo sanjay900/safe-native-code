@@ -7,6 +7,7 @@ import safeNativeCode.slave.RemoteObject;
 import safeNativeCode.slave.host.IClassSupplier;
 import safeNativeCode.utils.Utils;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.SecureClassLoader;
@@ -37,7 +38,7 @@ public class ProcessClassloader extends SecureClassLoader {
     @Override
     public Class<?> loadClass(String name) throws ClassNotFoundException {
         try {
-            String className = name.replace(".", "/") + ".class";
+            String className = name.replace(".", File.separator) + ".class";
             for (String s : forced) {
                 if (name.matches(s)) {
                     if (forced.stream().anyMatch(name::matches)) {

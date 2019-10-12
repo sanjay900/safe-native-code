@@ -17,7 +17,7 @@ import java.util.List;
 public class DockerSlave extends AbstractSlave {
     private Process process;
     private String containerID;
-    private static final String DOCKER_IMAGE = "openjdk:12";
+    private static final String DOCKER_IMAGE = "openjdk:13";
     private List<Path> pathsToShare;
 
     public DockerSlave(ClassLoader... classLoaders) {
