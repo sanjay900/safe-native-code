@@ -148,10 +148,10 @@ public class Tests {
             construct();
             Instant end = Instant.now();
             if (i > 5) {
-                totalTime += Duration.between(start, end).toMillis();
+                totalTime += Duration.between(start, end).toNanos();
             }
         }
-        System.out.println("Time taken to construct: " + totalTime / testCount);
+        System.out.println("Time taken to construct: " + totalTime/1000000f / testCount);
     }
 
     @Test
@@ -168,10 +168,10 @@ public class Tests {
             Instant end = Instant.now();
             Assert.assertEquals(expected, t.local, 0);
             if (i > 5) {
-                totalTime += Duration.between(start, end).toMillis();
+                totalTime += Duration.between(start, end).toNanos();
             }
         }
-        System.out.println("Time taken to test: " + totalTime / testCount);
+        System.out.println("Time taken to test: " + totalTime/1000000f / testCount);
     }
 
     @Test

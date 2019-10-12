@@ -17,10 +17,10 @@ public class TestsDirect {
             Instant end = Instant.now();
             Assert.assertEquals(expected, t.local, 0);
             if (i > 5) {
-                totalTime += Duration.between(start, end).toMillis();
+                totalTime += Duration.between(start, end).toNanos();
             }
         }
-        System.out.println("Time taken to test: " + totalTime / testCount);
+        System.out.println("Time taken to test: " + totalTime/1000000f / testCount);
     }
 
     @Test
@@ -29,16 +29,14 @@ public class TestsDirect {
         long totalTime = 0L;
         for (int i = 0; i < testCount + 5; i++) {
             Instant start = Instant.now();
-            Thread t = new Thread(() -> {
-            });
+            Thread t = new Thread(() -> {});
             t.start();
-            t.join();
             Instant end = Instant.now();
             if (i > 5) {
-                totalTime += Duration.between(start, end).toMillis();
+                totalTime += Duration.between(start, end).toNanos();
             }
         }
-        System.out.println("Time taken to construct: " + totalTime / testCount);
+        System.out.println("Time taken to construct: " + totalTime/1000000f / testCount);
     }
 
     @Test
@@ -54,10 +52,10 @@ public class TestsDirect {
                 Instant end = Instant.now();
                 Assert.assertEquals(expected, t.local, 0);
                 if (i > 5) {
-                    totalTime += Duration.between(start, end).toMillis();
+                    totalTime += Duration.between(start, end).toNanos();
                 }
             }
-            System.out.println("Time taken to test: " + totalTime / testCount);
+            System.out.println("Time taken to test: " + totalTime/1000000f / testCount);
         });
         th.start();
         th.join();
