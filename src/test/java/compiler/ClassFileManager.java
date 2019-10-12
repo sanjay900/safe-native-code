@@ -56,7 +56,7 @@ public class ClassFileManager extends ForwardingJavaFileManager<StandardJavaFile
 
             @Override
             public URL getResource(String name) {
-                String javaName = CompilerUtils.urlToJava(name.replace(".class",""));
+                String javaName = CompilerUtils.urlToJava(name);
                 //If this isn't a class from this compiler, hand off to the parent
                 if (!classMap.containsKey(javaName)) {
                     return super.getResource(name);

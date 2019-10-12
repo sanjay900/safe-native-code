@@ -10,6 +10,6 @@ class CompilerUtils {
 
     static String urlToJava(String str) {
         if (str.startsWith(File.separator)) str = str.substring(1);
-        return str.replace(File.separator, ".");
+        return str.replaceAll("\\.class$","").replace(File.separator, ".");
     }
 }
