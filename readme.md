@@ -1,7 +1,5 @@
-#SafeNativeCode
+# SafeNativeCode
 
-Running securely
+Safe Native Code is a project that aims to provide the ability to run native code in a memory safe way, by allowing for executing code inside another process transparently.
 
-Please run java processes with the arguments -Xshare:off -Djava.system.class.loader=safeNativeCode.SafeClassLoader
-Note that for junit support, a -Dtesting=true needs to also be passed, as junit and gradle don't behave correctly through our classloader,
-but blocking it would leave a security vulnerability. This is something that is built into the build.gradle script.
+In order to support all safety features of this library, execute Java processes with the arguments `-Xshare:off -Djava.system.class.loader=safeNativeCode.SafeClassLoader`
