@@ -34,7 +34,7 @@ public class Utils {
         String className = name.replace(".", File.separator) + ".class";
         URL classLoc = ClassLoader.getSystemClassLoader().getResource(className);
         //jrt: = java9, java.home = java8
-        return classLoc != null && (name.startsWith("java.") || classLoc.toString().startsWith("jar:file:" + System.getProperty("java.home")) || classLoc.toString().startsWith("jrt:/java.compiler") || classLoc.toString().startsWith("jrt:/java.base"));
+        return classLoc != null && (name.startsWith("java.") || classLoc.toString().startsWith("jar:file:" + System.getProperty("java.home")) || classLoc.toString().startsWith("jrt:/java.compiler") || classLoc.toString().startsWith("jrt:/java.base") || classLoc.toString().startsWith("jrt:/java.desktop"));
     }
 
     /**
