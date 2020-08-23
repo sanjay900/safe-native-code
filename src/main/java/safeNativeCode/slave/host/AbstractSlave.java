@@ -104,7 +104,7 @@ public abstract class AbstractSlave implements Slave {
         return args.toArray(new String[0]);
     }
 
-    static String[] getClassPath() {
+    protected String[] getClassPath() {
         return Arrays
                 .stream(System.getProperty("java.class.path").split(File.pathSeparator))
                 .map(path -> Paths.get(path).toAbsolutePath().toString())

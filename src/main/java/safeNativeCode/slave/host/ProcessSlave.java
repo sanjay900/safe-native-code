@@ -23,12 +23,17 @@ public class ProcessSlave extends AbstractSlave {
         super(timeLimit, args, classLoaders);
         start();
     }
-
+    
+    protected ProcessBuilder makeProcessBuilder() throws IOException {
+        Path javaProcess = Paths.get(System.getProperty("java.home"), "bin", "java");
+        return new ProcessBuilder(getJavaCommandArgs(javaProcess.toString(), "")).inheritIO();
+    }
+    
     protected void start() {
         if (process != null) terminate();
         try {
-            Path javaProcess = Paths.get(System.getProperty("java.home"), "bin", "java");
-            process = new ProcessBuilder(getJavaCommandArgs(javaProcess.toString(), "")).inheritIO().start();
+            ProcessBuilder pb=makeProcessBuilder();
+            process=pb.start();
             //End the remoteSlave process if the parent process ends.
             Runtime.getRuntime().addShutdownHook(new Thread(process::destroy));
             setupRegistry();
