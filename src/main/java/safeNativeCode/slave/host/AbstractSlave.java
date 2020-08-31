@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 public abstract class AbstractSlave implements Slave {
     private InternalSlave slave;
     private int registryPort;
-    private Set<ClassLoader> classLoaders;
+    private LinkedHashSet<ClassLoader> classLoaders;
     private boolean timeLimitUp = false;
     private String[] args;
 
@@ -47,7 +47,7 @@ public abstract class AbstractSlave implements Slave {
         if (classLoaders.length == 0) {
             classLoaders = new ClassLoader[]{ClassLoader.getSystemClassLoader()};
         }
-        this.classLoaders = new HashSet<>(Arrays.asList(classLoaders));
+        this.classLoaders = new LinkedHashSet<>(Arrays.asList(classLoaders));
         this.registryPort = findAvailablePort();
         Runtime.getRuntime().addShutdownHook(new Thread(this::terminate));
         if (timeLimit > 0) {

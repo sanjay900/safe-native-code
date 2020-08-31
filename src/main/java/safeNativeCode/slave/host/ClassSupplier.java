@@ -10,15 +10,16 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
  * An object that is responsible for replying to requests for information about classes
  */
 public class ClassSupplier extends UnicastRemoteObject implements IClassSupplier {
-    private transient Set<ClassLoader> classLoaders;
+    private transient LinkedHashSet<ClassLoader> classLoaders;
 
-    public ClassSupplier(Set<ClassLoader> classLoaders) throws RemoteException {
+    public ClassSupplier(LinkedHashSet<ClassLoader> classLoaders) throws RemoteException {
         super(0, null, port -> {
             ServerSocket ss = new ServerSocket();
             ss.setReuseAddress(true);
