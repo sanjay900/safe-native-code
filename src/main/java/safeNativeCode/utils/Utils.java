@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.function.BiPredicate;
 
 public class Utils {
     /**
@@ -33,10 +34,26 @@ public class Utils {
     public static boolean isJavaClass(String name) {
         String className = name.replace(".", File.separator) + ".class";
         URL classLoc = ClassLoader.getSystemClassLoader().getResource(className);
+        return isJavaClass.test(classLoc,name);
+    }
+    /**
+     * Get the current customized check for core java classes
+     * @return BiPredicate<URL,String>
+     */
+    static public BiPredicate<URL,String> getIsJavaClass(){return isJavaClass;}
+    
+    /**
+     * Set the current customized check for core java classes.
+     * The corresponding get method can be used to emulate super.
+     * @parameter BiPredicate<URL,String>
+     */
+    static public void setIsJavaClass(BiPredicate<URL,String> test){isJavaClass=test;}
+    static private volatile BiPredicate<URL,String> isJavaClass=(classLoc,name)->defaultIsJavaClass(classLoc,name);
+    private static boolean defaultIsJavaClass(URL classLoc,String name){
         //jrt: = java9, java.home = java8
         return classLoc != null && (name.startsWith("java.") || classLoc.toString().startsWith("jar:file:" + System.getProperty("java.home")) || classLoc.toString().startsWith("jrt:/java.compiler") || classLoc.toString().startsWith("jrt:/java.base") || classLoc.toString().startsWith("jrt:/java.desktop"));
     }
-
+    
     /**
      * Check if a class is a JUnit or Gradle class, only if testing mode is enabled
      *
