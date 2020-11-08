@@ -85,23 +85,27 @@ public abstract class AbstractSlave implements Slave {
         }
     }
 
-    private String[] getSlaveArgs() {
+    protected String[] getSlaveArgs() {
         return new String[]{registryPort + ""};
     }
 
-    String[] getJavaCommandArgs(String javaCommand, String libLocation) {
-        if (!libLocation.isEmpty()) libLocation += File.separator;
-        List<String> args = new ArrayList<>();
-        args.add(javaCommand);
-        args.addAll(Arrays.asList(this.args));
-        args.add("-Xshare:off");
-        args.add("-Djava.system.class.loader=safeNativeCode.slave.process.ProcessClassloader");
-        args.add("-cp");
-        String finalLibLocation = libLocation;
-        args.add(Arrays.stream(getClassPath()).map(path -> finalLibLocation + path).collect(Collectors.joining(File.pathSeparator)));
-        args.add(ProcessMain.class.getName());
-        args.addAll(Arrays.asList(getSlaveArgs()));
-        return args.toArray(new String[0]);
+    protected List<String> getJavaArgs(String libLocation){
+      if (!libLocation.isEmpty()) libLocation += File.separator;
+      List<String> args = new ArrayList<>();
+      args.add("-Xshare:off");
+      args.add("-Djava.system.class.loader=safeNativeCode.slave.process.ProcessClassloader");
+      args.add("-cp");
+      String finalLibLocation = libLocation;
+      args.add(Arrays.stream(getClassPath()).map(path -> finalLibLocation + path).collect(Collectors.joining(File.pathSeparator)));
+      args.add(ProcessMain.class.getName());
+      args.addAll(Arrays.asList(getSlaveArgs()));      
+      return args;
+      }
+    protected String[] getJavaCommandArgs(String javaCommand, String libLocation){
+      List<String> args =getJavaArgs(libLocation);
+      args.add(0,javaCommand);
+      args.addAll(1,Arrays.asList(this.args));
+      return args.toArray(new String[0]);
     }
 
     protected String[] getClassPath() {
