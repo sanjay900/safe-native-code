@@ -94,6 +94,7 @@ public abstract class AbstractSlave implements Slave {
       List<String> args = new ArrayList<>();
       args.add("-Xshare:off");
       args.add("-Djava.system.class.loader=safeNativeCode.slave.process.ProcessClassloader");
+      args.add("-Djava.rmi.server.hostname=127.0.0.1");
       args.add("-cp");
       String finalLibLocation = libLocation;
       args.add(Arrays.stream(getClassPath()).map(path -> finalLibLocation + path).collect(Collectors.joining(File.pathSeparator)));
@@ -117,7 +118,7 @@ public abstract class AbstractSlave implements Slave {
 
     void setupRegistry() throws RemoteException, InterruptedException {
         if (timeLimitUp) return;
-        Registry registry = LocateRegistry.getRegistry(registryPort);
+        Registry registry = LocateRegistry.getRegistry("127.0.0.1", registryPort);
         ClassSupplier retriever = new ClassSupplier(classLoaders);
         //Try repeatedly until the registry is active.
         while (true) {
